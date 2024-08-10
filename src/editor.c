@@ -2,6 +2,7 @@
 #include "include/ascii.h"
 #include "include/buffer.h"
 #include "include/cursor.h"
+#include "include/mem.h"
 #include "include/tui.h"
 #include "include/viewport.h"
 #include <curses.h>
@@ -28,6 +29,8 @@ Editor__run(Editor *editor) {
 
         Editor__compute(editor, ch);
     }
+
+    Editor__clean(editor);
 
     TUI__exit();
 }
@@ -108,4 +111,18 @@ Editor__mode_as_str(Mode mode) {
     };
 
     return modes[mode];
+}
+
+void
+Editor__clean(Editor *editor) {
+    Buffer *root = &editor->buffer;
+
+    while (root->next) {
+        Buffer *erase = root;
+        root = root->next;
+
+        MEM__release(erase);
+    }
+
+    MEM__release(root);
 }

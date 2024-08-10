@@ -3,12 +3,14 @@ CFLAGS = -Wall -Wextra -Werror -pedantic -std=c99
 LIBS = ncurses
 FILES = $(shell find src -type f -iname '*.c')
 
+all: run
+
 .PHONY: build
 build:
 	$(CC) $(FILES) $(CFLAGS) -l $(LIBS) -o $(BIN) 
 
 .PHONY: run
-run:
+run: build
 	./build/qwe
 
 TARGETS = $(shell find src -type f -iname '*.h' -or -iname '*.c')
@@ -17,3 +19,7 @@ TARGETS = $(shell find src -type f -iname '*.h' -or -iname '*.c')
 lint: $(OBJ)
 	@clang-format -style=file -i $(TARGETS)
 	@echo "== REFORMATTED SUCCESSFULLY =="
+
+.PHONY: leak-check
+leak-check: build
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -s ./build/qwe src/main.c

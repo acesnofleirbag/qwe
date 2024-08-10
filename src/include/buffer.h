@@ -14,5 +14,6 @@ struct Buffer {
 typedef struct Buffer Buffer;
 
 Buffer Buffer__new();
+Buffer Buffer__from_file(char *fname);
 
 #endif

@@ -31,5 +31,6 @@ void Editor__run(Editor *editor);
 void Editor__mv_cursor();
 void Editor__compute(Editor *editor, int ch);
 const char *Editor__mode_as_str(Mode mode);
+void Editor__clean(Editor *editor);
 
 #endif

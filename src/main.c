@@ -1,24 +1,15 @@
 #include "include/editor.h"
 #include "include/mem.h"
+#include "include/str.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 int
 main(void) {
     Editor editor = Editor__new();
 
     Editor__run(&editor);
-
-    // Editor__clean
-    Buffer *root = &editor.buffer;
-
-    while (root->next) {
-        Buffer *erase = root;
-        root = root->next;
-
-        MEM__release(erase);
-    }
-
-    MEM__release(root);
 
     return 0;
 }
