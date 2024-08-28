@@ -1,5 +1,6 @@
 #include "include/str.h"
 #include "include/mem.h"
+#include <curses.h>
 #include <stdio.h>
 #include <string.h>
 

@@ -2,6 +2,7 @@
 #include "include/err.h"
 #include "include/str.h"
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 
 Buffer
@@ -31,4 +32,11 @@ Buffer__from_file(char *fname) {
         .next = NULL,
         .lines = 0,
     };
+}
+
+void
+Buffer__release(Buffer *buffer) {
+    for (uint64_t i = 0; i < buffer->lines; i++) {
+        String__release(&buffer->data[i]);
+    }
 }

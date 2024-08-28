@@ -2,11 +2,15 @@
 #include "include/ascii.h"
 #include "include/buffer.h"
 #include "include/cursor.h"
+#include "include/debug.h"
 #include "include/mem.h"
+#include "include/str.h"
 #include "include/tui.h"
 #include "include/viewport.h"
 #include <curses.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
 
 Editor
 Editor__new() {
@@ -30,7 +34,7 @@ Editor__run(Editor *editor) {
         Editor__compute(editor, ch);
     }
 
-    Editor__clean(editor);
+    Editor__release(editor);
 
     TUI__exit();
 }
@@ -85,8 +89,25 @@ Editor__compute(Editor *editor, const int ch) {
                     Cursor__left(&editor->cursor);
                     delch();
                     break;
+                case KEY_ENTER:
+                    Editor__newline(editor);
+                    Cursor__down(&editor->cursor);
+                    break;
+                case KEY_UP:
+                    Cursor__up(&editor->cursor);
+                    break;
+                case KEY_RIGHT:
+                    Cursor__right(&editor->cursor);
+                    break;
+                case KEY_DOWN:
+                    Cursor__down(&editor->cursor);
+                    break;
+                case KEY_LEFT:
+                    Cursor__left(&editor->cursor);
+                    break;
                 default:
                     addch(ch);
+                    Editor__addch(editor, ch);
                     Cursor__right(&editor->cursor);
                     break;
             }
@@ -99,6 +120,29 @@ Editor__compute(Editor *editor, const int ch) {
             }
             break;
     }
+}
+
+void
+Editor__newline(Editor *editor) {
+    editor->buffer.data = editor->buffer.data == NULL ? MEM__request(sizeof(Str))
+                                                      : MEM__expand(editor->buffer.data,
+                                                                    sizeof(Str) * (editor->buffer.lines + 1),
+                                                                    sizeof(Str) * editor->buffer.lines,
+                                                                    CASTMODE__CHAR);
+
+    Str line = String__new(1);
+    editor->buffer.data[editor->buffer.lines] = line;
+
+    editor->buffer.lines += 1;
+}
+
+void
+Editor__addch(Editor *editor, int ch) {
+    if (editor->buffer.lines == 0) {
+        Editor__newline(editor);
+    }
+
+    String__append(&editor->buffer.data[editor->cursor.y], (char) ch);
 }
 
 const char *
@@ -114,15 +158,14 @@ Editor__mode_as_str(Mode mode) {
 }
 
 void
-Editor__clean(Editor *editor) {
-    Buffer *root = &editor->buffer;
+Editor__release(Editor *editor) {
+    Buffer *item = &editor->buffer;
 
-    while (root->next) {
-        Buffer *erase = root;
-        root = root->next;
+    while (item) {
+        Buffer *next = item->next;
 
-        MEM__release(erase);
+        Buffer__release(item);
+
+        item = next;
     }
-
-    MEM__release(root);
 }
