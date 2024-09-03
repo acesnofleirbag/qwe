@@ -1,5 +1,4 @@
 #include "include/editor.h"
-#include "include/mem.h"
 #include "include/str.h"
 #include <stdio.h>
 #include <stdlib.h>

@@ -2,13 +2,13 @@
 #define QUICKWARE_BUFFER_H
 
 #include "str.h"
-#include <sys/types.h>
+#include <stdint.h>
 
 struct Buffer {
     int id;
     struct Buffer *prev, *next;
     Str *data;
-    u_int64_t lines;
+    uint64_t lines;
 };
 
 typedef struct Buffer Buffer;

@@ -1,18 +1,19 @@
 #ifndef QUICKWARE_STR_H
 #define QUICKWARE_STR_H
 
-#include <sys/types.h>
+#include <stdint.h>
 
 #define STR_DEFAULT_SIZE 256
 
 typedef struct {
     char *data;
-    u_int64_t len;
-    u_int64_t capacity;
+    uint64_t len;
+    uint64_t capacity;
 } Str;
 
 Str String__new(unsigned long size);
-void String__append(Str *str, char ch);
+void String__append(Str *str, uint64_t x, char ch);
 void String__release(Str *str);
+void String__remove(Str *str, uint64_t x);
 
 #endif

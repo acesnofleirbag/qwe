@@ -3,6 +3,6 @@
 Finder
 Finder__new() {
     return (Finder) {
-        .n = 1,
+        .query = String__new(1),
     };
 }

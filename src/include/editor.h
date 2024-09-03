@@ -3,36 +3,57 @@
 
 #include "buffer.h"
 #include "cursor.h"
+#include "display.h"
 #include "finder.h"
 #include "viewport.h"
-#include <curses.h>
 #include <stdbool.h>
 
 #define CTRL(x) ((x) &0x1f)
+
+typedef enum {
+    MOVEMENT__UP,
+    MOVEMENT__RIGHT,
+    MOVEMENT__DOWN,
+    MOVEMENT__LEFT,
+} Movement;
 
 typedef enum {
     MODE__NORMAL,
     MODE__INSERT,
     MODE__VISUAL,
     MODE__COMMAND,
+    MODE__GOTO,
 } Mode;
 
 typedef struct {
+    // NOTE: display list order:
+    // 0: root
+    // 1: statusbar
+    DisplayList display_list;
+    Display *display;
     Viewport viewport;
     Cursor cursor;
     Buffer buffer;
     Finder finder;
     Mode mode;
     bool exit;
+    Str cmdline;
 } Editor;
 
 Editor Editor__new();
 void Editor__run(Editor *editor);
-void Editor__mv_cursor();
+void Editor__mv_cursor(Editor *editor, Movement movement);
 void Editor__compute(Editor *editor, int ch);
-void Editor__addch(Editor *editor, int ch);
-const char *Editor__mode_as_str(Mode mode);
+void Editor__add_char(Editor *editor, int ch);
 void Editor__release(Editor *editor);
 void Editor__newline(Editor *editor);
+void Editor__delete_char(Editor *editor);
+Str *Editor__get_current_line(Editor *editor);
+void Editor__redraw_line(Editor *editor);
+void Editor__render_statusbar(Editor *editor);
+void Editor__goto_endline(Editor *editor);
+void Editor__goto_start(Editor *editor);
+void Editor__goto_end(Editor *editor);
+void Editor__exec_command(Editor *editor);
 
 #endif
