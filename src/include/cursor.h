@@ -1,7 +1,6 @@
 #ifndef QUICKWARE_CURSOR_H
 #define QUICKWARE_CURSOR_H
 
-#include <curses.h>
 #include <stdint.h>
 
 typedef struct {
@@ -15,10 +14,10 @@ typedef struct {
 } Cursor;
 
 Cursor Cursor__new();
-void Cursor__up(Cursor *cursor);
-void Cursor__down(Cursor *cursor);
-void Cursor__left(Cursor *cursor);
-void Cursor__right(Cursor *cursor);
-void Cursor__from(Cursor *cursor, uint64_t x, uint64_t y);
+void Cursor__up();
+void Cursor__down();
+void Cursor__left();
+void Cursor__right();
+void Cursor__from(uint64_t x, uint64_t y);
 
 #endif

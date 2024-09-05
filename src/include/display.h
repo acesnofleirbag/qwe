@@ -1,5 +1,5 @@
-#ifndef QUICKWARE_DISPLAY_LIST_H
-#define QUICKWARE_DISPLAY_LIST_H
+#ifndef QUICKWARE_DISPLAY_H
+#define QUICKWARE_DISPLAY_H
 
 #include "cursor.h"
 #include <curses.h>
@@ -27,6 +27,6 @@ typedef struct {
 
 DisplayList DisplayList__new();
 void DisplayList__add(DisplayList *list, Display display);
-void DisplayList__refresh_displays(DisplayList *list);
+void DisplayList__release();
 
 #endif

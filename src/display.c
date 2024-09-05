@@ -1,4 +1,5 @@
 #include "include/display.h"
+#include "include/editor.h"
 #include <stdlib.h>
 
 DisplayList
@@ -23,9 +24,8 @@ DisplayList__add(DisplayList *list, Display display) {
 }
 
 void
-DisplayList__refresh_displays(DisplayList *display_list) {
-    for (int i = 0; i < display_list->len; i++) {
-        wrefresh(display_list->data[i].win);
+DisplayList__release() {
+    for (int i = 0; i < EDITOR.display_list.len; i++) {
+        delwin(EDITOR.display_list.data[i].win);
     }
-    wrefresh(stdscr);
 }
