@@ -7,35 +7,35 @@
 static void
 test_editor_new() {
     // arrange & act
-    Editor editor = Editor__new(Buffer__new());
+    EDITOR = Editor__new(Buffer__new(0));
 
     // assert
-    assert(editor.mode == MODE__NORMAL);
+    assert(EDITOR.mode == MODE__NORMAL);
 
     // release
-    // @@@
+    Editor__release();
 }
 
 static void
 test_editor_newline() {
     // arrange
-    Editor editor = Editor__new(Buffer__new());
+    EDITOR = Editor__new(Buffer__new(0));
 
     // act
     Editor__newline();
     Editor__newline();
 
     // assert
-    assert(editor.buffer.lines == 2);
+    assert(EDITOR.buffer.lines == 2);
 
     // release
-    // @@@
+    Editor__release();
 }
 
 static void
-test_editor_addch() {
+test_editor_add_char() {
     // arrange
-    Editor editor = Editor__new(Buffer__new());
+    EDITOR = Editor__new(Buffer__new(0));
 
     // act
     Editor__add_char('a');
@@ -45,17 +45,17 @@ test_editor_addch() {
     Editor__add_char('c');
 
     // assert
-    assert(editor.buffer.lines == 2);
-    assert(strcmp(editor.buffer.data[0].data, "ab") == 0);
-    assert(strcmp(editor.buffer.data[1].data, "c") == 0);
+    assert(EDITOR.buffer.lines == 2);
+    assert(strcmp(EDITOR.buffer.data[0].data, "ab") == 0);
+    assert(strcmp(EDITOR.buffer.data[1].data, "c") == 0);
 
     // release
-    // @@@
+    Editor__release();
 }
 
 void
-T__editor(void) {
-    (void) (test_editor_new);
-    (void) (test_editor_newline);
-    test_editor_addch();
+T__editor() {
+    test_editor_new();
+    test_editor_newline();
+    (void) (test_editor_add_char);  // FIXME: depending of cursor fixes
 }
