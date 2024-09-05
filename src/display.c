@@ -21,3 +21,11 @@ DisplayList__add(DisplayList *list, Display display) {
 
     list->len += 1;
 }
+
+void
+DisplayList__refresh_displays(DisplayList *display_list) {
+    for (int i = 0; i < display_list->len; i++) {
+        wrefresh(display_list->data[i].win);
+    }
+    wrefresh(stdscr);
+}

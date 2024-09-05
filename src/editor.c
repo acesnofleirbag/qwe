@@ -3,9 +3,9 @@
 #include "include/buffer.h"
 #include "include/cursor.h"
 #include "include/debug.h"
+#include "include/display.h"
 #include "include/str.h"
 #include "include/tui.h"
-#include "include/viewport.h"
 #include <curses.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -34,10 +34,13 @@ Editor__set_mode(Editor *editor, Mode mode) {
 static void
 Editor__render_tui(Editor *editor) {
     Editor__render_statusbar(editor);
+    Editor__render_editor(editor);
+    DisplayList__refresh_displays(&editor->display_list);
+}
 
-    for (int i = 0; i < editor->display_list.len; i++) {
-        wrefresh(editor->display_list.data[i].window);
-    }
+static Cursor *
+Editor__get_cursor(Editor *editor) {
+    return &editor->display_list.data[editor->display].cursor;
 }
 
 Editor
@@ -45,12 +48,10 @@ Editor__new() {
     return (Editor) {
         .exit = false,
         .mode = MODE__NORMAL,
-        .viewport = {.x = 0, .y = 0},
-        .cursor = Cursor__new(),
         .finder = Finder__new(),
         .buffer = Buffer__new(),
         .display_list = DisplayList__new(),
-        .display = NULL,
+        .display = EDITOR_DISPLAY,
         .cmdline = String__new(1),
     };
 }
@@ -119,9 +120,10 @@ Editor__compute(Editor *editor, const int ch) {
                 case '$':
                     Editor__goto_endline(editor);
                     break;
-                case '0':
-                    Cursor__from(&editor->cursor, 0, editor->cursor.y);
-                    break;
+                case '0': {
+                    Cursor *cursor = Editor__get_cursor(editor);
+                    Cursor__from(cursor, 0, cursor->y);
+                } break;
                 case ASCII_ESCAPE:
                     Editor__set_mode(editor, MODE__NORMAL);
                     break;
@@ -135,9 +137,11 @@ Editor__compute(Editor *editor, const int ch) {
                 case KEY_BACKSPACE:
                     Editor__delete_char(editor);
                     break;
-                case 10:  // KEY_ENTER
+                case ENTER: {
                     Editor__newline(editor);
-                    break;
+                    Cursor *cursor = Editor__get_cursor(editor);
+                    Cursor__from(cursor, 0, cursor->y + 1);
+                } break;
                 case KEY_UP:
                     Editor__mv_cursor(editor, MOVEMENT__UP);
                     break;
@@ -157,7 +161,7 @@ Editor__compute(Editor *editor, const int ch) {
             break;
         case MODE__COMMAND:
             switch (ch) {
-                case 10:  // KEY_ENTER
+                case ENTER:
                     Editor__exec_command(editor);
                     break;
                 case KEY_BACKSPACE:
@@ -174,25 +178,47 @@ Editor__compute(Editor *editor, const int ch) {
     }
 }
 
-Str *
-Editor__get_current_line(Editor *editor) {
-    if (editor->cursor.y < editor->buffer.lines) {
-        return &editor->buffer.data[editor->cursor.y];
-    }
-
-    return NULL;
-}
-
 void
-Editor__delete_char(Editor *editor) {
-    Str *line = Editor__get_current_line(editor);
+Editor__mv_cursor(Editor *editor, Movement movement) {
+    WINDOW *display = editor->display_list.data[editor->display].win;
+    Cursor *cursor = Editor__get_cursor(editor);
 
-    if (line != NULL) {
-        String__remove(line, editor->cursor.x);
+    switch (movement) {
+        case MOVEMENT__UP: {
+            if (cursor->offset.y > 0 && cursor->y == cursor->offset.y) {
+                wscrl(display, -1);
+                cursor->offset.y -= 1;
+            }
+
+            Cursor__up(cursor);
+            break;
+            case MOVEMENT__DOWN: {
+                uint64_t max_y = getmaxy(display);
+                uint64_t new_y = cursor->y + 1;
+
+                if (new_y < max_y) {
+                    Cursor__down(cursor);
+                } else {
+                    cursor->y += 1;
+
+                    wscrl(display, 1);
+                    cursor->offset.y += 1;
+                }
+            } break;
+            case MOVEMENT__RIGHT: {
+                Str *line = Editor__get_current_line(editor);
+
+                if (line != NULL) {
+                    if (cursor->x < line->len) {
+                        Cursor__right(cursor);
+                    }
+                }
+            } break;
+            case MOVEMENT__LEFT:
+                Cursor__left(cursor);
+                break;
+        }
     }
-
-    Editor__mv_cursor(editor, MOVEMENT__LEFT);
-    Editor__redraw_line(editor);
 }
 
 void
@@ -204,115 +230,66 @@ Editor__newline(Editor *editor) {
     Str line = String__new(1);
     editor->buffer.data[editor->buffer.lines] = line;
     editor->buffer.lines += 1;
+}
 
-    Editor__mv_cursor(editor, MOVEMENT__DOWN);
+Str *
+Editor__get_current_line(Editor *editor) {
+    Cursor *cursor = Editor__get_cursor(editor);
+
+    if (cursor->y < editor->buffer.lines) {
+        return &editor->buffer.data[cursor->y];
+    }
+
+    return NULL;
 }
 
 void
 Editor__add_char(Editor *editor, int ch) {
-    if (editor->buffer.lines == 0) {
+    if (Editor__get_current_line(editor) == NULL) {
         Editor__newline(editor);
     }
 
+    Cursor *cursor = Editor__get_cursor(editor);
     Str *line = Editor__get_current_line(editor);
-    String__append(line, editor->cursor.x, (char) ch);
+    String__append(line, cursor->x, (char) ch);
 
     Editor__mv_cursor(editor, MOVEMENT__RIGHT);
-    Editor__redraw_line(editor);
 }
 
 void
-Editor__redraw_line(Editor *editor) {
-    WINDOW *root = editor->display_list.data[0].window;
+Editor__delete_char(Editor *editor) {
+    Cursor *cursor = Editor__get_cursor(editor);
     Str *line = Editor__get_current_line(editor);
 
-    wclrtoeol(root);
-    mvwprintw(root, editor->cursor.y, 0, "%s", line->data);
-
-    Cursor__from(&editor->cursor, editor->cursor.x, editor->cursor.y);
-}
-
-void
-Editor__mv_cursor(Editor *editor, Movement movement) {
-    switch (movement) {
-        case MOVEMENT__UP: {
-            uint64_t new_y = editor->cursor.y - 1;
-
-            if (new_y < editor->buffer.lines) {
-                Str prev_line = editor->buffer.data[new_y];
-
-                if (editor->cursor.x <= prev_line.len) {
-                    Cursor__up(&editor->cursor);
-                } else {
-                    Cursor__from(&editor->cursor, prev_line.len, new_y);
-                }
-            }
-            break;
-            case MOVEMENT__RIGHT: {
-                if (editor->cursor.y < editor->buffer.lines) {
-                    Str *line = Editor__get_current_line(editor);
-
-                    if ((editor->cursor.x + 1) <= line->len) {
-                        Cursor__right(&editor->cursor);
-                    }
-                }
-            } break;
-            case MOVEMENT__DOWN: {
-                uint64_t new_y = editor->cursor.y + 1;
-
-                if (new_y < editor->buffer.lines) {
-                    Str next_line = editor->buffer.data[new_y];
-
-                    if (editor->cursor.x <= next_line.len) {
-                        Cursor__down(&editor->cursor);
-                    } else {
-                        Cursor__from(&editor->cursor, next_line.len, new_y);
-                    }
-                }
-            } break;
-            case MOVEMENT__LEFT:
-                Cursor__left(&editor->cursor);
-                break;
-        }
-    }
-}
-
-void
-Editor__render_statusbar(Editor *editor) {
-    WINDOW *statusbar = editor->display_list.data[1].window;
-
-    if (!(editor->mode == MODE__COMMAND)) {
-        wclrtoeol(statusbar);
-        mvwprintw(statusbar, 0, 0, "-- %s --", Editor__mode_as_str(editor->mode));
-    } else {
-        wclrtoeol(statusbar);
-        mvwprintw(statusbar, 0, 0, ":%s", editor->cmdline.data);
+    if (line != NULL) {
+        String__remove(line, cursor->x);
     }
 
-    char lineinfo[20];
-    sprintf(lineinfo, "%zu:%zu", editor->cursor.y + 1, editor->cursor.x);
-
-    wclrtoeol(statusbar);
-    mvwprintw(statusbar, 0, editor->viewport.x - strlen(lineinfo), "%s", lineinfo);
+    Editor__mv_cursor(editor, MOVEMENT__LEFT);
 }
 
 void
 Editor__goto_endline(Editor *editor) {
+    Cursor *cursor = Editor__get_cursor(editor);
     Str *line = Editor__get_current_line(editor);
 
     if (line != NULL) {
-        Cursor__from(&editor->cursor, line->len, editor->cursor.y);
+        Cursor__from(cursor, line->len, cursor->y);
     }
 }
 
 void
 Editor__goto_start(Editor *editor) {
-    Cursor__from(&editor->cursor, 0, 0);
+    Cursor *cursor = Editor__get_cursor(editor);
+
+    Cursor__from(cursor, 0, 0);
 }
 
 void
 Editor__goto_end(Editor *editor) {
-    Cursor__from(&editor->cursor, 0, editor->buffer.lines);
+    Cursor *cursor = Editor__get_cursor(editor);
+
+    Cursor__from(cursor, 0, editor->buffer.lines);
 }
 
 void
@@ -324,6 +301,45 @@ Editor__exec_command(Editor *editor) {
     }
 
     Editor__set_mode(editor, MODE__NORMAL);
+}
+
+void
+Editor__render_editor(Editor *editor) {
+    WINDOW *display = editor->display_list.data[editor->display].win;
+    Cursor *cursor = Editor__get_cursor(editor);
+
+    wclear(display);
+
+    uint64_t max_y = getmaxy(display);
+    uint64_t start = (cursor->y > max_y ? cursor->y - max_y : 0) + cursor->offset.y;
+
+    // rehydrate only visible area for a better performance
+    for (uint64_t i = start, j = 0; i < start + max_y; i++, j++) {
+        if (editor->buffer.lines > i) {
+            Str line = editor->buffer.data[i];
+
+            mvwprintw(display, j, 0, "%s", line.data);
+        }
+    }
+}
+
+void
+Editor__render_statusbar(Editor *editor) {
+    Display display = editor->display_list.data[STATUS_BAR_DISPLAY];
+    Cursor *cursor = Editor__get_cursor(editor);
+
+    wclear(display.win);
+
+    if (editor->mode != MODE__COMMAND) {
+        mvwprintw(display.win, 0, 0, "[%s]", Editor__mode_as_str(editor->mode));
+    } else {
+        mvwprintw(display.win, 0, 0, ":%s", editor->cmdline.data);
+    }
+
+    char cursor_info[20];
+    sprintf(cursor_info, "%zu:%zu", cursor->y + 1, cursor->x + 1);
+
+    mvwprintw(display.win, 0, getmaxx(display.win) - strlen(cursor_info), "%s", cursor_info);
 }
 
 void
@@ -339,6 +355,6 @@ Editor__release(Editor *editor) {
     }
 
     for (int i = 0; i < editor->display_list.len; i++) {
-        delwin(editor->display_list.data[i].window);
+        delwin(editor->display_list.data[i].win);
     }
 }
