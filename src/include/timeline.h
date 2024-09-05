@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 typedef struct {
+    void *data;
 } Frame;
 
 // Timeline is the abstraction to perform undo/redo behavior on the editor

@@ -16,6 +16,8 @@ Commander__eval() {
 
     if (strcmp("q", cmd.data) == 0) {
         EDITOR.exit = true;
+    } else if (strcmp("Q", cmd.data) == 0) {
+        EDITOR.exit = true;
     }
 
     Editor__set_mode(MODE__NORMAL);

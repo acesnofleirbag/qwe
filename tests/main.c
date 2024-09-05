@@ -1,4 +1,5 @@
 #include "buffer.c"
+#include "commander.c"
 #include "cursor.c"
 #include "editor.c"
 #include "include/test.h"
@@ -14,6 +15,7 @@ main() {
     /* __TEST__(T__cursor); */
     __TEST__(T__editor);
     __TEST__(T__timeline);
+    __TEST__(T__commander);
 
     return 0;
 }
