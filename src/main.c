@@ -1,4 +1,7 @@
+#include "include/buffer.h"
+#include "include/debug.h"
 #include "include/editor.h"
+#include "include/explorer.h"
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,6 +36,20 @@ eval_arguments(int argc, char **argv) {
     }
 }
 
+Buffer
+eval_entry_files(int argc, char **argv) {
+    // eval non-option arguments
+    for (int i = optind; i < argc; i++) {
+        char *arg = argv[i];
+
+        if (Explorer__is_file(arg)) {
+            return Buffer__from_file(arg, i - optind);
+        }
+    }
+
+    return Buffer__new(0);
+}
+
 Editor EDITOR;
 
 #ifdef TEST
@@ -43,8 +60,10 @@ int
 main(int argc, char **argv) {
     eval_arguments(argc, argv);
 
+    Buffer buffer = eval_entry_files(argc, argv);
+
     // Global editor state
-    EDITOR = Editor__new();
+    EDITOR = Editor__new(buffer);
 
     Editor__run();
 

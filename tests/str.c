@@ -22,8 +22,8 @@ test_str_append() {
     Str str = String__new(3);
 
     // act
-    String__append(&str, 'a');
-    String__append(&str, 'b');
+    String__append(&str, str.len, 'a');
+    String__append(&str, str.len, 'b');
 
     // assert
     assert(strcmp(str.data, "ab") == 0);

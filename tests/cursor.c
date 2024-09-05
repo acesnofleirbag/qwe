@@ -9,9 +9,9 @@ test_mv_cursor_up(void) {
     Cursor cursor = Cursor__new();
 
     // act
-    Cursor__down(&cursor);
-    Cursor__down(&cursor);
-    Cursor__up(&cursor);
+    Cursor__down();
+    Cursor__down();
+    Cursor__up();
 
     // assert
     assert(cursor.y == 1);
@@ -23,7 +23,7 @@ test_mv_cursor_right(void) {
     Cursor cursor = Cursor__new();
 
     // act
-    Cursor__right(&cursor);
+    Cursor__right();
 
     // assert
     assert(cursor.x == 1);
@@ -35,7 +35,7 @@ test_mv_cursor_down(void) {
     Cursor cursor = Cursor__new();
 
     // act
-    Cursor__down(&cursor);
+    Cursor__down();
 
     // assert
     assert(cursor.y == 1);
@@ -47,9 +47,9 @@ test_mv_cursor_left(void) {
     Cursor cursor = Cursor__new();
 
     // act
-    Cursor__right(&cursor);
-    Cursor__right(&cursor);
-    Cursor__left(&cursor);
+    Cursor__right();
+    Cursor__right();
+    Cursor__left();
 
     // assert
     assert(cursor.x == 1);

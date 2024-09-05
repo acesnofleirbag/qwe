@@ -7,7 +7,7 @@
 static void
 test_editor_new() {
     // arrange & act
-    Editor editor = Editor__new();
+    Editor editor = Editor__new(Buffer__new());
 
     // assert
     assert(editor.mode == MODE__NORMAL);
@@ -19,11 +19,11 @@ test_editor_new() {
 static void
 test_editor_newline() {
     // arrange
-    Editor editor = Editor__new();
+    Editor editor = Editor__new(Buffer__new());
 
     // act
-    Editor__newline(&editor);
-    Editor__newline(&editor);
+    Editor__newline();
+    Editor__newline();
 
     // assert
     assert(editor.buffer.lines == 2);
@@ -35,14 +35,14 @@ test_editor_newline() {
 static void
 test_editor_addch() {
     // arrange
-    Editor editor = Editor__new();
+    Editor editor = Editor__new(Buffer__new());
 
     // act
-    Editor__addch(&editor, 'a');
-    Editor__addch(&editor, 'b');
-    Editor__newline(&editor);
-    Cursor__down(&editor.cursor);
-    Editor__addch(&editor, 'c');
+    Editor__add_char('a');
+    Editor__add_char('b');
+    Editor__newline();
+    Cursor__down();
+    Editor__add_char('c');
 
     // assert
     assert(editor.buffer.lines == 2);

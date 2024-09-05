@@ -23,13 +23,13 @@ Editor__render_tui() {
 }
 
 Editor
-Editor__new() {
+Editor__new(Buffer buffer) {
     return (Editor) {
         .exit = false,
         .mode = MODE__NORMAL,
         .display = EDITOR_DISPLAY,
         .finder = Finder__new(),
-        .buffer = Buffer__new(),
+        .buffer = buffer,
         .display_list = DisplayList__new(),
         .commander = Commander__new(),
     };
@@ -246,16 +246,6 @@ Editor__mode_as_str(Mode mode) {
 
 void
 Editor__release() {
-    Buffer *item = &EDITOR.buffer;
-
-    while (item) {
-        Buffer *next = item->next;
-
-        Buffer__release(item);
-
-        item = next;
-    }
-
     Finder__release();
     Commander__release();
     DisplayList__release();

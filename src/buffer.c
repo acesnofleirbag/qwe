@@ -1,36 +1,61 @@
 #include "include/buffer.h"
+#include "include/debug.h"
 #include "include/err.h"
 #include "include/str.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 Buffer
-Buffer__new() {
+Buffer__new(uint64_t id) {
     return (Buffer) {
-        .id = 1,
+        .id = id,
         .data = NULL,
-        .prev = NULL,
-        .next = NULL,
         .lines = 0,
     };
 }
 
 Buffer
-Buffer__from_file(char *fname) {
-    FILE *file = fopen(fname, "r+");
+Buffer__from_file(char *fname, uint64_t id) {
+    FILE *file = fopen(fname, "r");
 
     if (file == NULL) {
         err("Opening file: %s", fname);
         fclose(file);
     }
 
+    uint64_t lines = 0;
+    Str str = String__new(1);
+    Str *data = calloc(1, sizeof(Str));
+    data[lines] = str;
+
+    char ch;
+
+    while ((ch = fgetc(file)) != EOF) {
+        Str *line = &data[lines];
+
+        if (ch == '\r') {
+            continue;
+        }
+
+        if (ch == '\n') {
+            lines += 1;
+            data = realloc(data, sizeof(Str) * (lines + 1));
+            Str new_line = String__new(1);
+            data[lines] = new_line;
+            continue;
+        }
+
+        String__append(line, line->len, ch);
+    }
+
+    fclose(file);
+
     return (Buffer) {
-        .id = 1,  // FIXME
-        .data = NULL,
-        .prev = NULL,
-        .next = NULL,
-        .lines = 0,
+        .id = id,
+        .data = data,
+        .lines = lines,
     };
 }
 

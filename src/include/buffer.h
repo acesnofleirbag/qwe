@@ -5,16 +5,15 @@
 #include <stdint.h>
 
 struct Buffer {
-    int id;
-    struct Buffer *prev, *next;
-    Str *data;
+    uint64_t id;
     uint64_t lines;
+    Str *data;
 };
 
 typedef struct Buffer Buffer;
 
-Buffer Buffer__new();
-Buffer Buffer__from_file(char *fname);
+Buffer Buffer__new(uint64_t id);
+Buffer Buffer__from_file(char *fname, uint64_t id);
 void Buffer__release(Buffer *buffer);
 
 #endif

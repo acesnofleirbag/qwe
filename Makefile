@@ -1,8 +1,13 @@
+DEBUG = 1
 CC = gcc
 BIN = build/qwe
 CFLAGS = -Wall -Wextra -Werror -pedantic -std=c99
 LIBS = ncurses
 FILES = $(shell find src -type f -iname '*.c')
+
+ifeq ($(DEBUG),1)
+	CFLAGS += -g -O0 -DDEBUG
+endif
 
 all: run
 
@@ -18,7 +23,7 @@ run: build
 
 .PHONY: test-build
 test-build:
-	$(CC) $(FILES) tests/main.c -l $(LIBS) $(CFLAGS) -g -O0 -o build/_t -DTEST
+	$(CC) $(FILES) tests/main.c -l $(LIBS) $(CFLAGS) -o build/_t -DTEST
 
 .PHONY: test-run
 test-run: test-build

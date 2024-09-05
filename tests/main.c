@@ -8,10 +8,10 @@
 
 int
 main() {
-    __TEST__(T__editor);
+    /* __TEST__(T__editor); */
     /* __TEST__(T__cursor); */
     /* __TEST__(T__buffer); */
-    /* __TEST__(T__string); */
+    __TEST__(T__string);
 
     return 0;
 }

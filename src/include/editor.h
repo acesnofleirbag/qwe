@@ -37,7 +37,7 @@ typedef struct {
     Commander commander;
 } Editor;
 
-Editor Editor__new();
+Editor Editor__new(Buffer buffer);
 void Editor__run();
 void Editor__compute(int ch);
 void Editor__mv_cursor(Movement movement);
