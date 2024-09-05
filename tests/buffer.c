@@ -1,8 +1,5 @@
 #include "../src/include/buffer.h"
 #include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 static void
 test_buffer_new() {

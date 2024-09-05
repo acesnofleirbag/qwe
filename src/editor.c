@@ -7,6 +7,7 @@
 #include "include/display.h"
 #include "include/goto.h"
 #include "include/str.h"
+#include "include/timeline.h"
 #include "include/tui.h"
 #include <curses.h>
 #include <stdbool.h>
@@ -32,6 +33,7 @@ Editor__new(Buffer buffer) {
         .buffer = buffer,
         .display_list = DisplayList__new(),
         .commander = Commander__new(),
+        .timeline = Timeline__new(),
     };
 }
 
@@ -248,5 +250,6 @@ void
 Editor__release() {
     Finder__release();
     Commander__release();
+    Timeline__release();
     DisplayList__release();
 }

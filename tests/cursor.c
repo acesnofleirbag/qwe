@@ -2,8 +2,6 @@
 #include "../src/include/buffer.h"
 #include "../src/include/editor.h"
 #include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 static void
 test_mv_cursor_up() {

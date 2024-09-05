@@ -6,6 +6,7 @@
 #include "cursor.h"
 #include "display.h"
 #include "finder.h"
+#include "timeline.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -35,6 +36,7 @@ typedef struct {
     Buffer buffer;
     Finder finder;
     Commander commander;
+    Timeline timeline;
 } Editor;
 
 Editor Editor__new(Buffer buffer);
