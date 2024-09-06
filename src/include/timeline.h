@@ -5,20 +5,20 @@
 
 #include <stdint.h>
 
-typedef struct {
+typedef struct frame {
     void *data;
-} Frame;
+} frame_t;
 
 // Timeline is the abstraction to perform undo/redo behavior on the editor
-typedef struct {
+typedef struct timeline {
     uint64_t len;
     uint64_t capacity;
     char *data;
-} Timeline;
+} timeline_t;
 
-Timeline Timeline__new();
-void Timeline__push(char ch);
-char *Timeline__pop();
-void Timeline__release();
+timeline_t timeline__new();
+void timeline__push(char ch);
+char *timeline__pop();
+void timeline__release();
 
 #endif

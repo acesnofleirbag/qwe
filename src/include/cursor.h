@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-typedef struct {
+typedef struct cursor {
     uint64_t x;
     uint64_t y;
     uint64_t highest_x;
@@ -11,13 +11,13 @@ typedef struct {
         uint64_t x;
         uint64_t y;
     } offset;
-} Cursor;
+} cursor_t;
 
-Cursor Cursor__new();
-void Cursor__up();
-void Cursor__down();
-void Cursor__left();
-void Cursor__right();
-void Cursor__from(uint64_t x, uint64_t y);
+cursor_t cursor__new();
+void cursor__up();
+void cursor__down();
+void cursor__left();
+void cursor__right();
+void cursor__from(uint64_t x, uint64_t y);
 
 #endif

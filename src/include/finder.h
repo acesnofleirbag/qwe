@@ -3,17 +3,17 @@
 
 #include "str.h"
 
-typedef enum {
+typedef enum find_mode {
     FIND_MODE__FORWARD,
     FIND_MODE__BACKWARD,
-} FindMode;
+} find_mode_t;
 
 typedef struct {
-    FindMode mode;
-    Str query;
-} Finder;
+    find_mode_t mode;
+    str_t query;
+} finder_t;
 
-Finder Finder__new();
-void Finder__release();
+finder_t finder__new();
+void finder__release();
 
 #endif

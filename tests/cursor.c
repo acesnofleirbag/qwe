@@ -6,149 +6,149 @@
 static void
 test_mv_cursor_up() {
     // arrange
-    EDITOR = Editor__new(Buffer__new(0));
+    EDITOR = editor__new(buffer__new(0));
 
     // act
-    Cursor__down();
-    Cursor__down();
-    Cursor__up();
+    cursor__down();
+    cursor__down();
+    cursor__up();
 
     // assert
-    Cursor *cursor = Editor__get_cursor();
+    cursor_t *cursor = editor__get_cursor();
 
     assert(cursor->y == 1);
 
     // release
-    Editor__release();
+    editor__release();
 }
 
 static void
 test_mv_cursor_right() {
     // arrange
-    EDITOR = Editor__new(Buffer__new(0));
+    EDITOR = editor__new(buffer__new(0));
 
     // act
-    Cursor__right();
+    cursor__right();
 
     // assert
-    Cursor *cursor = Editor__get_cursor();
+    cursor_t *cursor = editor__get_cursor();
 
     assert(cursor->x == 1);
 
     // release
-    Editor__release();
+    editor__release();
 }
 
 static void
 test_mv_cursor_down() {
     // arrange
-    EDITOR = Editor__new(Buffer__new(0));
+    EDITOR = editor__new(buffer__new(0));
 
     // act
-    Cursor__down();
+    cursor__down();
 
     // assert
-    Cursor *cursor = Editor__get_cursor();
+    cursor_t *cursor = editor__get_cursor();
 
     assert(cursor->y == 1);
 
     // release
-    Editor__release();
+    editor__release();
 }
 
 static void
 test_mv_cursor_left() {
     // arrange
-    EDITOR = Editor__new(Buffer__new(0));
+    EDITOR = editor__new(buffer__new(0));
 
     // act
-    Cursor__right();
-    Cursor__right();
-    Cursor__left();
+    cursor__right();
+    cursor__right();
+    cursor__left();
 
     // assert
-    Cursor *cursor = Editor__get_cursor();
+    cursor_t *cursor = editor__get_cursor();
 
     assert(cursor->x == 1);
 
     // release
-    Editor__release();
+    editor__release();
 }
 
 static void
 test_mv_down_offset() {
     // arrange
-    EDITOR = Editor__new(Buffer__new(0));
+    EDITOR = editor__new(buffer__new(0));
 
     // act
-    Cursor__right();
-    Cursor__right();
-    Cursor__left();
+    cursor__right();
+    cursor__right();
+    cursor__left();
 
     // assert
-    Cursor *cursor = Editor__get_cursor();
+    cursor_t *cursor = editor__get_cursor();
 
     assert(cursor->x == 1);
 
     // release
-    Editor__release();
+    editor__release();
 }
 
 static void
 test_mv_up_offset() {
     // arrange
-    EDITOR = Editor__new(Buffer__new(0));
+    EDITOR = editor__new(buffer__new(0));
 
     // act
-    Cursor__right();
-    Cursor__right();
-    Cursor__left();
+    cursor__right();
+    cursor__right();
+    cursor__left();
 
     // assert
-    Cursor *cursor = Editor__get_cursor();
+    cursor_t *cursor = editor__get_cursor();
 
     assert(cursor->x == 1);
 
     // release
-    Editor__release();
+    editor__release();
 }
 
 static void
 test_mv_right_offset() {
     // arrange
-    EDITOR = Editor__new(Buffer__new(0));
+    EDITOR = editor__new(buffer__new(0));
 
     // act
-    Cursor__right();
-    Cursor__right();
-    Cursor__left();
+    cursor__right();
+    cursor__right();
+    cursor__left();
 
     // assert
-    Cursor *cursor = Editor__get_cursor();
+    cursor_t *cursor = editor__get_cursor();
 
     assert(cursor->x == 1);
 
     // release
-    Editor__release();
+    editor__release();
 }
 
 static void
 test_mv_left_offset() {
     // arrange
-    EDITOR = Editor__new(Buffer__new(0));
+    EDITOR = editor__new(buffer__new(0));
 
     // act
-    Cursor__right();
-    Cursor__right();
-    Cursor__left();
+    cursor__right();
+    cursor__right();
+    cursor__left();
 
     // assert
-    Cursor *cursor = Editor__get_cursor();
+    cursor_t *cursor = editor__get_cursor();
 
     assert(cursor->x == 1);
 
     // release
-    Editor__release();
+    editor__release();
 }
 
 void

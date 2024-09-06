@@ -3,7 +3,7 @@
 #include <sys/stat.h>
 
 bool
-Explorer__is_file(char *str) {
+explorer__is_file(char *str) {
     struct stat buffer;
 
     if (stat(str, &buffer) != 0) {
@@ -14,7 +14,7 @@ Explorer__is_file(char *str) {
 }
 
 bool
-Explorer__is_dir(char *str) {
+explorer__is_dir(char *str) {
     struct stat buffer;
 
     if (stat(str, &buffer) != 0) {

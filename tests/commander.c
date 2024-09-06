@@ -7,33 +7,33 @@
 static void
 test_commander_eval_exit_cmd1() {
     // arrange
-    EDITOR = Editor__new(Buffer__new(0));
-    String__append(&EDITOR.commander.cmd, EDITOR.commander.cmd.len, 'q');
+    EDITOR = editor__new(buffer__new(0));
+    string__append(&EDITOR.commander.cmd, EDITOR.commander.cmd.len, 'q');
 
     // act
-    Commander__eval();
+    commander__eval();
 
     // assert
     assert(EDITOR.exit == true);
 
     // release
-    Editor__release();
+    editor__release();
 }
 
 static void
 test_commander_eval_exit_cmd2() {
     // arrange
-    EDITOR = Editor__new(Buffer__new(0));
-    String__append(&EDITOR.commander.cmd, EDITOR.commander.cmd.len, 'Q');
+    EDITOR = editor__new(buffer__new(0));
+    string__append(&EDITOR.commander.cmd, EDITOR.commander.cmd.len, 'Q');
 
     // act
-    Commander__eval();
+    commander__eval();
 
     // assert
     assert(EDITOR.exit == true);
 
     // release
-    Editor__release();
+    editor__release();
 }
 
 void

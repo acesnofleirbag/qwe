@@ -2,21 +2,21 @@
 #include "include/editor.h"
 #include <stdlib.h>
 
-DisplayList
-DisplayList__new() {
-    return (DisplayList) {
+display_list_t
+display_list__new() {
+    return (display_list_t) {
         .len = 0,
         .data = NULL,
     };
 }
 
 void
-DisplayList__add(DisplayList *list, Display display) {
+display_list__add(display_list_t *list, display_t display) {
     if (list->data == NULL) {
-        list->data = calloc(1, sizeof(Display));
+        list->data = calloc(1, sizeof(display_t));
         list->data[0] = display;
     } else {
-        list->data = realloc(list->data, sizeof(Display) * (list->len + 1));
+        list->data = realloc(list->data, sizeof(display_t) * (list->len + 1));
         list->data[list->len] = display;
     }
 
@@ -24,7 +24,7 @@ DisplayList__add(DisplayList *list, Display display) {
 }
 
 void
-DisplayList__release() {
+display_list__release() {
     for (int i = 0; i < EDITOR.display_list.len; i++) {
         delwin(EDITOR.display_list.data[i].win);
     }

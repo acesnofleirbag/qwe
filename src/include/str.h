@@ -5,15 +5,15 @@
 
 #define STR_DEFAULT_SIZE 256
 
-typedef struct {
+typedef struct str {
     char *data;
     uint64_t len;
     uint64_t capacity;
-} Str;
+} str_t;
 
-Str String__new(unsigned long size);
-void String__append(Str *str, uint64_t x, char ch);
-void String__release(Str *str);
-void String__remove(Str *str, uint64_t x);
+str_t string__new(unsigned long size);
+void string__append(str_t *str, uint64_t x, char ch);
+void string__release(str_t *str);
+void string__remove(str_t *str, uint64_t x);
 
 #endif

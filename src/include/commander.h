@@ -3,12 +3,12 @@
 
 #include "str.h"
 
-typedef struct {
-    Str cmd;
-} Commander;
+typedef struct commander {
+    str_t cmd;
+} commander_t;
 
-Commander Commander__new();
-void Commander__eval();
-void Commander__release();
+commander_t commander__new();
+void commander__eval();
+void commander__release();
 
 #endif

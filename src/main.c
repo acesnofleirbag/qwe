@@ -36,21 +36,21 @@ eval_arguments(int argc, char **argv) {
     }
 }
 
-Buffer
+buffer_t
 eval_entry_files(int argc, char **argv) {
     // eval non-option arguments
     for (int i = optind; i < argc; i++) {
         char *arg = argv[i];
 
-        if (Explorer__is_file(arg)) {
-            return Buffer__from_file(arg, i - optind);
+        if (explorer__is_file(arg)) {
+            return buffer__from_file(arg, i - optind);
         }
     }
 
-    return Buffer__new(0);
+    return buffer__new(0);
 }
 
-Editor EDITOR;
+editor_t EDITOR;
 
 #ifdef TEST
 #define main yield_main
@@ -60,12 +60,12 @@ int
 main(int argc, char **argv) {
     eval_arguments(argc, argv);
 
-    Buffer buffer = eval_entry_files(argc, argv);
+    buffer_t buffer = eval_entry_files(argc, argv);
 
     // Global editor state
-    EDITOR = Editor__new(buffer);
+    EDITOR = editor__new(buffer);
 
-    Editor__run();
+    editor__run();
 
     return 0;
 }

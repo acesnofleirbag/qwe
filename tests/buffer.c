@@ -4,7 +4,7 @@
 static void
 test_buffer_new() {
     // arrange & act
-    Buffer buffer = Buffer__new(0);
+    buffer_t buffer = buffer__new(0);
 
     // assert
     assert(buffer.id == 0);

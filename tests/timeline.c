@@ -6,34 +6,34 @@
 static void
 test_timeline_push() {
     // arrange
-    EDITOR = Editor__new(Buffer__new(0));
+    EDITOR = editor__new(buffer__new(0));
 
     // act
-    Timeline__push('a');
+    timeline__push('a');
 
     // assert
     assert(EDITOR.timeline.data[EDITOR.timeline.len - 1] == 'a');
 
     // release
-    Editor__release();
+    editor__release();
 }
 
 static void
 test_timeline_pop() {
     // arrange
-    EDITOR = Editor__new(Buffer__new(0));
-    Timeline__push('a');
-    Timeline__push('b');
-    Timeline__push('c');
+    EDITOR = editor__new(buffer__new(0));
+    timeline__push('a');
+    timeline__push('b');
+    timeline__push('c');
 
     // act
-    Timeline__pop();
+    timeline__pop();
 
     // assert
     assert(EDITOR.timeline.data[EDITOR.timeline.len - 1] == 'b');
 
     // release
-    Editor__release();
+    editor__release();
 }
 
 void

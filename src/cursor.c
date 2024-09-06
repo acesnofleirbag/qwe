@@ -4,15 +4,15 @@
 #include <curses.h>
 #include <stdint.h>
 
-Cursor
-Cursor__new() {
-    return (Cursor) {.x = 0, .y = 0, .highest_x = 0, .offset = {.x = 0, .y = 0}};
+cursor_t
+cursor__new() {
+    return (cursor_t) {.x = 0, .y = 0, .highest_x = 0, .offset = {.x = 0, .y = 0}};
 }
 
 void
-Cursor__up() {
+cursor__up() {
     WINDOW *display = EDITOR.display_list.data[EDITOR.display].win;
-    Cursor *cursor = Editor__get_cursor();
+    cursor_t *cursor = editor__get_cursor();
 
     if (cursor->offset.y > 0 && cursor->y == cursor->offset.y) {
         wscrl(display, -1);
@@ -28,9 +28,9 @@ Cursor__up() {
 }
 
 void
-Cursor__down() {
+cursor__down() {
     WINDOW *display = EDITOR.display_list.data[EDITOR.display].win;
-    Cursor *cursor = Editor__get_cursor();
+    cursor_t *cursor = editor__get_cursor();
 
     uint64_t max_y = getmaxy(display);
     uint64_t new_y = cursor->y + 1;
@@ -47,8 +47,8 @@ Cursor__down() {
 }
 
 void
-Cursor__left() {
-    Cursor *cursor = Editor__get_cursor();
+cursor__left() {
+    cursor_t *cursor = editor__get_cursor();
 
     if (cursor->x == 0) {
         return;
@@ -59,10 +59,10 @@ Cursor__left() {
 }
 
 void
-Cursor__right() {
-    Cursor *cursor = Editor__get_cursor();
+cursor__right() {
+    cursor_t *cursor = editor__get_cursor();
 
-    Str *line = Editor__get_current_line();
+    str_t *line = editor__get_current_line();
 
     if (line != NULL) {
         if (cursor->x < line->len) {
@@ -77,8 +77,8 @@ Cursor__right() {
 }
 
 void
-Cursor__from(uint64_t x, uint64_t y) {
-    Cursor *cursor = Editor__get_cursor();
+cursor__from(uint64_t x, uint64_t y) {
+    cursor_t *cursor = editor__get_cursor();
 
     cursor->x = x;
     cursor->y = y;

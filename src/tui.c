@@ -6,7 +6,7 @@
 #include <string.h>
 
 void
-TUI__start() {
+tui__start() {
     int x_bound;
     int y_bound;
 
@@ -22,23 +22,23 @@ TUI__start() {
 
     scrollok(editor_win, TRUE);
 
-    Display editor_display = {.type = DISPLAY_TYPE__ROOT, .win = editor_win, .cursor = Cursor__new()};
-    Display statusbar_display = {.type = DISPLAY_TYPE__STATUS_BAR, .win = statusbar_win, .cursor = Cursor__new()};
+    display_t editor_display = {.type = DISPLAY_TYPE__ROOT, .win = editor_win, .cursor = cursor__new()};
+    display_t statusbar_display = {.type = DISPLAY_TYPE__STATUS_BAR, .win = statusbar_win, .cursor = cursor__new()};
 
-    DisplayList__add(&EDITOR.display_list, editor_display);
-    DisplayList__add(&EDITOR.display_list, statusbar_display);
+    display_list__add(&EDITOR.display_list, editor_display);
+    display_list__add(&EDITOR.display_list, statusbar_display);
 }
 
 void
-TUI__render() {
-    TUI__render_editor();
-    TUI__render_statusbar();
+tui__render() {
+    tui__render_editor();
+    tui__render_statusbar();
 }
 
 void
-TUI__render_editor() {
+tui__render_editor() {
     WINDOW *display = EDITOR.display_list.data[EDITOR.display].win;
-    Cursor *cursor = Editor__get_cursor();
+    cursor_t *cursor = editor__get_cursor();
 
     wclear(display);
 
@@ -48,7 +48,7 @@ TUI__render_editor() {
     // rehydrate only visible area for a better performance
     for (uint64_t i = start, j = 0; i < start + max_y; i++, j++) {
         if (EDITOR.buffer.lines > i) {
-            Str line = EDITOR.buffer.data[i];
+            str_t line = EDITOR.buffer.data[i];
 
             mvwprintw(display, j, 0, "%s", line.data);
         }
@@ -56,14 +56,14 @@ TUI__render_editor() {
 }
 
 void
-TUI__render_statusbar() {
-    Display display = EDITOR.display_list.data[STATUS_BAR_DISPLAY];
-    Cursor *cursor = Editor__get_cursor();
+tui__render_statusbar() {
+    display_t display = EDITOR.display_list.data[STATUS_BAR_DISPLAY];
+    cursor_t *cursor = editor__get_cursor();
 
     wclear(display.win);
 
     if (EDITOR.mode != MODE__COMMAND) {
-        mvwprintw(display.win, 0, 0, "[%s]", Editor__mode_as_str(EDITOR.mode));
+        mvwprintw(display.win, 0, 0, "[%s]", editor__mode_as_str(EDITOR.mode));
     } else {
         mvwprintw(display.win, 0, 0, ":%s", EDITOR.commander.cmd.data);
     }
@@ -75,16 +75,14 @@ TUI__render_statusbar() {
 }
 
 void
-TUI__refresh_displays() {
+tui__refresh_displays() {
     for (int i = 0; i < EDITOR.display_list.len; i++) {
         wrefresh(EDITOR.display_list.data[i].win);
     }
-
-    wrefresh(stdscr);
 }
 
 void
-TUI__exit() {
+tui__exit() {
     refresh();
     endwin();
 }

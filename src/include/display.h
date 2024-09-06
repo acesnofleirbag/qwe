@@ -8,25 +8,25 @@
 #define EDITOR_DISPLAY 0
 #define STATUS_BAR_DISPLAY 1
 
-typedef enum {
+typedef enum display_type {
     DISPLAY_TYPE__ROOT,
     DISPLAY_TYPE__STATUS_BAR,
     DISPLAY_TYPE__FILETREE,
-} DisplayType;
+} display_type_t;
 
-typedef struct {
-    DisplayType type;
+typedef struct display {
+    display_type_t type;
     WINDOW *win;
-    Cursor cursor;
-} Display;
+    cursor_t cursor;
+} display_t;
 
-typedef struct {
+typedef struct display_list {
     uint8_t len;
-    Display *data;
-} DisplayList;
+    display_t *data;
+} display_list_t;
 
-DisplayList DisplayList__new();
-void DisplayList__add(DisplayList *list, Display display);
-void DisplayList__release();
+display_list_t display_list__new();
+void display_list__add(display_list_t *list, display_t display);
+void display_list__release();
 
 #endif

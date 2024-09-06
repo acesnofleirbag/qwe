@@ -7,17 +7,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-Buffer
-Buffer__new(uint64_t id) {
-    return (Buffer) {
+buffer_t
+buffer__new(uint64_t id) {
+    return (buffer_t) {
         .id = id,
         .data = NULL,
         .lines = 0,
     };
 }
 
-Buffer
-Buffer__from_file(char *fname, uint64_t id) {
+buffer_t
+buffer__from_file(char *fname, uint64_t id) {
     FILE *file = fopen(fname, "r");
 
     if (file == NULL) {
@@ -26,14 +26,14 @@ Buffer__from_file(char *fname, uint64_t id) {
     }
 
     uint64_t lines = 0;
-    Str str = String__new(1);
-    Str *data = calloc(1, sizeof(Str));
+    str_t str = string__new(1);
+    str_t *data = calloc(1, sizeof(str_t));
     data[lines] = str;
 
     char ch;
 
     while ((ch = fgetc(file)) != EOF) {
-        Str *line = &data[lines];
+        str_t *line = &data[lines];
 
         if (ch == '\r') {
             continue;
@@ -41,18 +41,18 @@ Buffer__from_file(char *fname, uint64_t id) {
 
         if (ch == '\n') {
             lines += 1;
-            data = realloc(data, sizeof(Str) * (lines + 1));
-            Str new_line = String__new(1);
+            data = realloc(data, sizeof(str_t) * (lines + 1));
+            str_t new_line = string__new(1);
             data[lines] = new_line;
             continue;
         }
 
-        String__append(line, line->len, ch);
+        string__append(line, line->len, ch);
     }
 
     fclose(file);
 
-    return (Buffer) {
+    return (buffer_t) {
         .id = id,
         .data = data,
         .lines = lines,
@@ -60,8 +60,8 @@ Buffer__from_file(char *fname, uint64_t id) {
 }
 
 void
-Buffer__release(Buffer *buffer) {
+buffer__release(buffer_t *buffer) {
     for (uint64_t i = 0; i < buffer->lines; i++) {
-        String__release(&buffer->data[i]);
+        string__release(&buffer->data[i]);
     }
 }

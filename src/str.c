@@ -5,9 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-Str
-String__new(unsigned long size) {
-    return (Str) {
+str_t
+string__new(unsigned long size) {
+    return (str_t) {
         .data = calloc(size, sizeof(char) + 1),
         .len = 0,
         .capacity = size,
@@ -15,7 +15,7 @@ String__new(unsigned long size) {
 }
 
 void
-String__append(Str *str, uint64_t x, const char ch) {
+string__append(str_t *str, uint64_t x, const char ch) {
     if (str->len == str->capacity) {
         unsigned long new_capacity = str->capacity * 2;
 
@@ -29,14 +29,14 @@ String__append(Str *str, uint64_t x, const char ch) {
 }
 
 void
-String__remove(Str *str, uint64_t x) {
+string__remove(str_t *str, uint64_t x) {
     memmove(&str->data[x - 1], &str->data[x], str->len - x + 1);
     str->len -= 1;
     str->data[str->len] = '\0';
 }
 
 void
-String__release(Str *str) {
+string__release(str_t *str) {
     free(str->data);
     str->data = NULL;
 }

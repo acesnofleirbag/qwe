@@ -4,16 +4,14 @@
 #include "str.h"
 #include <stdint.h>
 
-struct Buffer {
+typedef struct buffer {
     uint64_t id;
     uint64_t lines;
-    Str *data;
-};
+    str_t *data;
+} buffer_t;
 
-typedef struct Buffer Buffer;
-
-Buffer Buffer__new(uint64_t id);
-Buffer Buffer__from_file(char *fname, uint64_t id);
-void Buffer__release(Buffer *buffer);
+buffer_t buffer__new(uint64_t id);
+buffer_t buffer__from_file(char *fname, uint64_t id);
+void buffer__release(buffer_t *buffer);
 
 #endif

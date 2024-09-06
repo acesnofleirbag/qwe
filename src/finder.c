@@ -2,17 +2,17 @@
 #include "include/editor.h"
 #include "include/str.h"
 
-Finder
-Finder__new() {
-    return (Finder) {
+finder_t
+finder__new() {
+    return (finder_t) {
         .mode = FIND_MODE__FORWARD,
-        .query = String__new(1),
+        .query = string__new(1),
     };
 }
 
 void
-Finder__release() {
-    Finder *finder = &EDITOR.finder;
+finder__release() {
+    finder_t *finder = &EDITOR.finder;
 
-    String__release(&finder->query);
+    string__release(&finder->query);
 }

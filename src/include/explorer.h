@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-bool Explorer__is_file(char *str);
-bool Explorer__is_dir(char *str);
+bool explorer__is_file(char *str);
+bool explorer__is_dir(char *str);
 
 #endif

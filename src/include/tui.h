@@ -3,10 +3,10 @@
 
 #include "editor.h"
 
-void TUI__start();
-void TUI__render_editor();
-void TUI__render_statusbar();
-void TUI__refresh_displays();
-void TUI__exit();
+void tui__start();
+void tui__render_editor();
+void tui__render_statusbar();
+void tui__refresh_displays();
+void tui__exit();
 
 #endif
