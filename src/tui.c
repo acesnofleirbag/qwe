@@ -17,16 +17,31 @@ tui__start() {
     keypad(stdscr, TRUE);
     getmaxyx(stdscr, y_bound, x_bound);
 
+    // editor display
     WINDOW *editor_win = newwin(y_bound - 1, x_bound, 0, 0);
-    WINDOW *statusbar_win = newwin(1, x_bound, y_bound - 1, 0);
 
     scrollok(editor_win, TRUE);
 
-    display_t editor_display = {.type = DISPLAY_TYPE__ROOT, .win = editor_win, .cursor = cursor__new()};
-    display_t statusbar_display = {.type = DISPLAY_TYPE__STATUS_BAR, .win = statusbar_win, .cursor = cursor__new()};
+    int editor_x = 0;
+    int editor_y = 0;
+    getmaxyx(editor_win, editor_y, editor_x);
+
+    viewport_t editor_viewport = {.x = editor_x, .y = editor_y};
+    display_t editor_display = display__new(DISPLAY_TYPE__EDITOR, editor_win, editor_viewport);
 
     display_list__add(&EDITOR.display_list, editor_display);
-    display_list__add(&EDITOR.display_list, statusbar_display);
+
+    // status bar display
+    WINDOW *status_bar_win = newwin(1, x_bound, y_bound - 1, 0);
+
+    int status_bar_x = 0;
+    int status_bar_y = 0;
+    getmaxyx(status_bar_win, status_bar_y, status_bar_x);
+
+    viewport_t status_bar_viewport = {.x = status_bar_x, .y = status_bar_y};
+    display_t status_bar_display = display__new(DISPLAY_TYPE__STATUS_BAR, status_bar_win, status_bar_viewport);
+
+    display_list__add(&EDITOR.display_list, status_bar_display);
 }
 
 void

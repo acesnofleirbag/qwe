@@ -2,6 +2,16 @@
 #include "include/editor.h"
 #include <stdlib.h>
 
+display_t
+display__new(display_type_t type, WINDOW *win, viewport_t viewport) {
+    return (display_t) {
+        .type = type,
+        .cursor = cursor__new(),
+        .win = win,
+        .viewport = viewport,
+    };
+}
+
 display_list_t
 display_list__new() {
     return (display_list_t) {

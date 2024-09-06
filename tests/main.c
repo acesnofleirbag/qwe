@@ -10,12 +10,15 @@
 
 int
 main() {
+    __TEST__(T__cursor);
     __TEST__(T__string);
     __TEST__(T__buffer);
-    /* __TEST__(T__cursor); */
     __TEST__(T__editor);
     __TEST__(T__timeline);
     __TEST__(T__commander);
 
+// skip test-cases area
+#if 0
+#endif
     return 0;
 }

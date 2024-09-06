@@ -1,5 +1,4 @@
 #include "include/cursor.h"
-#include "include/debug.h"
 #include "include/editor.h"
 #include <curses.h>
 #include <stdint.h>
@@ -11,11 +10,13 @@ cursor__new() {
 
 void
 cursor__up() {
-    WINDOW *display = EDITOR.display_list.data[EDITOR.display].win;
     cursor_t *cursor = editor__get_cursor();
 
     if (cursor->offset.y > 0 && cursor->y == cursor->offset.y) {
+#ifndef TEST
+        WINDOW *display = EDITOR.display_list.data[EDITOR.display].win;
         wscrl(display, -1);
+#endif  // TEST
         cursor->offset.y -= 1;
     }
 
@@ -24,24 +25,30 @@ cursor__up() {
     }
 
     cursor->y -= 1;
+#ifndef TEST
     move(cursor->y - cursor->offset.y, cursor->x);
+#endif  // TEST
 }
 
 void
 cursor__down() {
-    WINDOW *display = EDITOR.display_list.data[EDITOR.display].win;
+    viewport_t *viewport = &EDITOR.display_list.data[EDITOR.display].viewport;
     cursor_t *cursor = editor__get_cursor();
 
-    uint64_t max_y = getmaxy(display);
     uint64_t new_y = cursor->y + 1;
 
-    if (new_y < max_y) {
+    if (new_y < viewport->y) {
         cursor->y += 1;
+#ifndef TEST
         move(cursor->y, cursor->x);
+#endif  // TEST
     } else {
         cursor->y += 1;
 
+#ifndef TEST
+        WINDOW *display = EDITOR.display_list.data[EDITOR.display].win;
         wscrl(display, 1);
+#endif  // TEST
         cursor->offset.y += 1;
     }
 }
@@ -55,23 +62,28 @@ cursor__left() {
     }
 
     cursor->x -= 1;
+#ifndef TEST
     move(cursor->y, cursor->x);
+#endif  // TEST
 }
 
 void
 cursor__right() {
     cursor_t *cursor = editor__get_cursor();
-
     str_t *line = editor__get_current_line();
 
-    if (line != NULL) {
-        if (cursor->x < line->len) {
-            cursor->x += 1;
-            move(cursor->y, cursor->x);
+    if (line == NULL) {
+        return;
+    }
 
-            if (cursor->highest_x < cursor->x) {
-                cursor->highest_x = cursor->x;
-            }
+    if (cursor->x < line->len) {
+        cursor->x += 1;
+#ifndef TEST
+        move(cursor->y, cursor->x);
+#endif  // TEST
+
+        if (cursor->highest_x < cursor->x) {
+            cursor->highest_x = cursor->x;
         }
     }
 }
@@ -83,5 +95,7 @@ cursor__from(uint64_t x, uint64_t y) {
     cursor->x = x;
     cursor->y = y;
 
+#ifndef TEST
     move(cursor->y, cursor->x);
+#endif  // TEST
 }

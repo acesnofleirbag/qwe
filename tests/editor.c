@@ -35,11 +35,16 @@ test_editor_add_char() {
     // arrange
     EDITOR = editor__new(buffer__new(0));
 
+    viewport_t viewport = {.x = 5, .y = 5};
+    display_t display = display__new(DISPLAY_TYPE__EDITOR, NULL, viewport);
+
+    display_list__add(&EDITOR.display_list, display);
+
     // act
     editor__add_char('a');
     editor__add_char('b');
     editor__newline();
-    cursor__down();
+    cursor__from(0, 1);  // ENTER press
     editor__add_char('c');
 
     // assert
@@ -55,5 +60,5 @@ void
 T__editor() {
     test_editor_new();
     test_editor_newline();
-    (void) (test_editor_add_char);  // FIXME: depending of cursor fixes
+    test_editor_add_char();
 }
