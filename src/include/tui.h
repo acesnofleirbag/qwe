@@ -6,7 +6,6 @@
 void tui__start();
 void tui__render_editor();
 void tui__render_statusbar();
-void tui__refresh_displays();
 void tui__exit();
 
 #endif

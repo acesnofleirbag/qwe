@@ -19,18 +19,25 @@ string__append(str_t *str, uint64_t x, const char ch) {
     if (str->len == str->capacity) {
         unsigned long new_capacity = str->capacity * 2;
 
-        str->data = realloc(str->data, new_capacity);
+        // duplicate the space (+1 for the '\0' char)
+        str->data = realloc(str->data, new_capacity + 1);
         str->capacity = new_capacity;
     }
 
-    memmove(&str->data[x + 1], &str->data[x], str->len - x);
+    // append happening on the middle of the string, so I need to open space for the new char
+    if (str->len != x) {
+        memmove(&str->data[x + 1], &str->data[x], str->len - x);
+    }
+
     str->data[x] = ch;
     str->len += 1;
+    str->data[str->len] = '\0';
 }
 
 void
 string__remove(str_t *str, uint64_t x) {
-    memmove(&str->data[x - 1], &str->data[x], str->len - x + 1);
+    memmove(&str->data[x - 1], &str->data[x], str->len - x);
+
     str->len -= 1;
     str->data[str->len] = '\0';
 }

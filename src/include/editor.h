@@ -13,6 +13,11 @@
 #define CTRL(x) ((x) &0x1f)
 #define ENTER 10
 
+typedef enum line_mode {
+    LINE_MODE__NORMAL,
+    LINE_MODE__RELATIVE
+} line_mode_t;
+
 typedef enum movement {
     MOVEMENT__UP,
     MOVEMENT__RIGHT,
@@ -50,6 +55,7 @@ str_t *editor__get_current_line();
 void editor__add_char(int ch);
 void editor__delete_char();
 const char *editor__mode_as_str(editor_mode_t mode);
+uint64_t editor__line_number_by_mode(uint64_t start_line, uint64_t ptr_render);
 void editor__release();
 
 extern editor_t EDITOR;

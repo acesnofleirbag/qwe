@@ -20,7 +20,6 @@ static void
 editor__render_tui() {
     tui__render_editor();
     tui__render_statusbar();
-    tui__refresh_displays();
 }
 
 editor_t
@@ -244,6 +243,28 @@ editor__mode_as_str(editor_mode_t mode) {
     };
 
     return modes[mode];
+}
+
+uint64_t
+editor__line_number_by_mode(uint64_t start_line, uint64_t ptr_render) {
+    // EDITOR.config;
+    cursor_t *cursor = editor__get_cursor();
+
+    // normal mode line numbers
+    if (LINE_MODE__NORMAL) {
+        return start_line + ptr_render;
+    }
+
+    // relative mode line numbers
+    uint64_t nline = cursor->y;
+
+    if (cursor->y > start_line + ptr_render) {
+        nline = cursor->y - (start_line - ptr_render);
+    } else if (cursor->y < start_line + ptr_render) {
+        nline = (start_line + ptr_render) - cursor->y;
+    }
+
+    return nline;
 }
 
 void
