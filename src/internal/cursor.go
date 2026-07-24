@@ -1,4 +1,4 @@
-package main
+package internal
 
 type Offset struct {
 	x int64
@@ -36,7 +36,7 @@ func (self *Cursor) Up() {
 func (self *Cursor) Right() {
 	line := EDITOR.GetCurrentLine()
 
-	if int64(len(line)) > self.x {
+	if int64(len(line.data)) > self.x {
 		self.x += 1
 	}
 }

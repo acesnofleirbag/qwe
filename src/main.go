@@ -3,10 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+	"qwe/src/internal"
 )
-
-// global editor state
-var EDITOR = NewEditor()
 
 func usage() {
 	fmt.Print(`The Quickware Editor: 
@@ -23,8 +21,10 @@ func evalArgs(args []string) {
 			usage()
 			os.Exit(0)
 		case "-v", "--version":
-			fmt.Println("The Quickware Editor 0.1.0")
+			fmt.Println("The Quickware Editor 1.0.0")
 			os.Exit(0)
+		default:
+			internal.EDITOR.OpenPath(args[i])
 		}
 	}
 }
@@ -32,9 +32,8 @@ func evalArgs(args []string) {
 func main() {
 	evalArgs(os.Args)
 
-	iface := NewScreen()
+	iface := internal.NewScreen()
 
-	EDITOR.AttachIface(iface)
-	EDITOR.SetConfig(Config{lineMode: LineMode__Normal, useArrows: true})
-	EDITOR.Run()
+	internal.EDITOR.AttachIface(iface)
+	internal.EDITOR.Run()
 }

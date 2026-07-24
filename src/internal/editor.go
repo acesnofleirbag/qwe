@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"strings"
@@ -32,11 +32,6 @@ const (
 	LineMode__Relative
 )
 
-type Config struct {
-	lineMode  LineMode
-	useArrows bool
-}
-
 type Editor struct {
 	exit     bool
 	mode     Mode
@@ -45,18 +40,22 @@ type Editor struct {
 	buffer   Buffer
 	timeline Timeline
 	tui      TUI
-	config   Config
+	config   map[string]any
 }
 
-func NewEditor() Editor {
-	return Editor{
-		exit:     false,
-		mode:     Mode__Normal,
-		cmdline:  make([]rune, 0),
-		finder:   NewFinder(),
-		buffer:   NewBuffer(),
-		timeline: NewTimeline(),
-	}
+var EDITOR = Editor{
+	exit:     false,
+	mode:     Mode__Normal,
+	cmdline:  make([]rune, 0),
+	finder:   NewFinder(),
+	buffer:   NewBuffer(),
+	timeline: NewTimeline(),
+
+	config: CONFIG,
+}
+
+func (self *Editor) OpenPath(fname string) {
+	self.buffer = NewBufferFromPath(fname)
 }
 
 func (self *Editor) Run() {
@@ -81,10 +80,6 @@ func (self *Editor) AttachIface(tui TUI) {
 	self.tui = tui
 }
 
-func (self *Editor) SetConfig(config Config) {
-	self.config = config
-}
-
 func (self *Editor) GetModeAsStr() string {
 	modes := map[Mode]string{
 		Mode__Normal:  "NORMAL",
@@ -101,18 +96,14 @@ func (self *Editor) GetCursor() *Cursor {
 	return &self.buffer.cursor
 }
 
-func (self *Editor) GetCurrentLine() []rune {
+func (self *Editor) GetCurrentLine() *Line {
 	cursor := self.GetCursor()
 
 	if self.buffer.lines <= cursor.y {
 		self.addNewLine()
 	}
 
-	return self.buffer.data[cursor.y]
-}
-
-func (self *Editor) GetNlineByMode(mode int) {
-
+	return self.buffer.curline
 }
 
 func (self *Editor) compute(event tcell.Event) {
@@ -125,7 +116,6 @@ func (self *Editor) compute(event tcell.Event) {
 	case *tcell.EventMouse:
 		switch event.Buttons() {
 		case tcell.WheelUp:
-			self.exit = true
 			// self.scrollUp()
 			break
 		case tcell.WheelDown:
@@ -136,38 +126,36 @@ func (self *Editor) compute(event tcell.Event) {
 	case *tcell.EventKey:
 		switch event.Key() {
 		case tcell.KeyUp:
-			if self.config.useArrows {
+			if self.config["useArrows"] == true {
 				self.mvCursor(Movement__Up)
 			}
 			break
 		case tcell.KeyRight:
-			if self.config.useArrows {
+			if self.config["useArrows"] == true {
 				self.mvCursor(Movement__Right)
 			}
 			break
 		case tcell.KeyDown:
-			if self.config.useArrows {
+			if self.config["useArrows"] == true {
 				self.mvCursor(Movement__Down)
 			}
 			break
 		case tcell.KeyLeft:
-			if self.config.useArrows {
+			if self.config["useArrows"] == true {
 				self.mvCursor(Movement__Left)
 			}
 			break
 		case tcell.KeyEscape:
 			if self.mode != Mode__Normal {
 				self.setMode(Mode__Normal)
-			} else {
-				self.exit = true
 			}
 			break
 		case tcell.KeyEnter:
 			switch self.mode {
 			case Mode__Insert:
 				cursor := self.GetCursor()
-
 				cursor.From(0, cursor.y+1)
+				self.addNewLine()
 				break
 			case Mode__Command:
 				self.exeCmd()
@@ -176,9 +164,15 @@ func (self *Editor) compute(event tcell.Event) {
 			break
 		case tcell.KeyBackspace, tcell.KeyBackspace2:
 			if self.mode == Mode__Insert {
-				self.rmChar()
+				self.rmChar("backward")
+				self.mvCursor(Movement__Left)
 			} else if self.mode == Mode__Command {
-                self.cmdline = self.cmdline[:len(self.cmdline) - 1]
+				self.cmdline = self.cmdline[:len(self.cmdline)-1]
+			}
+			break
+		case tcell.KeyDelete:
+			if self.mode == Mode__Insert {
+				self.rmChar("forward")
 			}
 			break
 		case tcell.KeyRune:
@@ -247,13 +241,19 @@ func (self *Editor) mvCursor(move Movement) {
 
 	switch move {
 	case Movement__Up:
-		cursor.Up()
+		if self.buffer.curline.prev != nil {
+			cursor.Up()
+			self.buffer.curline = self.buffer.curline.prev
+		}
 		break
 	case Movement__Right:
 		cursor.Right()
 		break
 	case Movement__Down:
-		cursor.Down()
+		if self.buffer.curline.next != nil {
+			self.buffer.curline = self.buffer.curline.next
+			cursor.Down()
+		}
 		break
 	case Movement__Left:
 		cursor.Left()
@@ -266,36 +266,56 @@ func (self *Editor) setMode(mode Mode) {
 }
 
 func (self *Editor) addNewLine() {
-	self.buffer.data = append(self.buffer.data, make([]rune, 0))
+	cursor := self.GetCursor()
+
+	line := NewLine(cursor.y)
+
+	if cursor.y == 0 {
+		// TODO: self.buffer.head.next = self.buffer.head typing 'O'
+		self.buffer.headline = &line
+		self.buffer.tailline = &line
+	} else if cursor.y == self.buffer.lines {
+		self.buffer.curline.next = &line
+		line.prev = self.buffer.curline
+		self.buffer.tailline = &line
+	} else {
+		line.prev = self.buffer.curline
+		line.next = self.buffer.curline.next
+		self.buffer.curline.next = &line
+		self.buffer.tailline = &line
+	}
+
+	self.buffer.curline = &line
+
 	self.buffer.lines += 1
 }
 
 func (self *Editor) addChar(ch rune) {
-	cursor := self.GetCursor()
 	line := self.GetCurrentLine()
-
-	line = append(line, ch)
-	self.buffer.data[cursor.y] = line
-
+	line.data = append(line.data, ch)
 	self.buffer.dirty = true
-
 	self.mvCursor(Movement__Right)
 }
 
-// FIXME
-func (self *Editor) rmChar() {
+func (self *Editor) rmChar(mode string) {
 	cursor := self.GetCursor()
 	line := self.GetCurrentLine()
 
-	line = append(line[cursor.x-1:], line[:cursor.x]...)
+	if strings.Compare(mode, "backward") == 0 && cursor.x > 0 {
+		pre := line.data[:cursor.x-1]
+		su := line.data[cursor.x:]
+
+		line.data = append(pre, su...)
+	} else if strings.Compare(mode, "forward") == 0 && cursor.x < int64(len(line.data)) {
+		pre := line.data[:cursor.x]
+		su := line.data[cursor.x+1:]
+
+		line.data = append(pre, su...)
+	}
 }
 
-func (self *Editor) GetNlineOffset() int64 {
+func (self *Editor) ComputeNlineOffset() int64 {
 	nline := self.buffer.lines
-
-	if nline == 0 {
-		return 1
-	}
 
 	x := int64(0)
 
@@ -304,22 +324,21 @@ func (self *Editor) GetNlineOffset() int64 {
 		x += 1
 	}
 
-	return x
+	return x + 1
 }
 
 func (self *Editor) exeCmd() {
 	cmd := string(self.cmdline[1:])
 
 	if strings.Compare("q", cmd) == 0 || strings.Compare("Q", cmd) == 0 {
-		self.exit = true
+		if self.buffer.dirty {
+			// TODO: show a warning
+			self.exit = true
+		} else {
+			self.exit = true
+		}
 	}
 
 	self.cmdline = self.cmdline[:0]
 	self.setMode(Mode__Normal)
-}
-
-func (self *Editor) checkByDirtyBuffer() {
-	for i := &self.buffer; i.next != nil; i = i.next {
-		// TODO
-	}
 }
