@@ -1,3 +1,5 @@
+// Copyright (c) The Quickware Editor, 2026
+
 package internal
 
 const (
@@ -10,11 +12,13 @@ type Finder struct {
 	query string
 }
 
-func NewFinder() Finder {
-	return Finder{
+func NewFinder() *Finder {
+	finder := &Finder{
 		mode:  FindMode__Forward,
 		query: "",
 	}
+
+	return finder
 }
 
 func (self *Finder) FindForward() {}

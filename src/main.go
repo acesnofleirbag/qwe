@@ -1,3 +1,5 @@
+// Copyright (c) The Quickware Editor, 2026
+
 package main
 
 import (
@@ -31,9 +33,7 @@ func evalArgs(args []string) {
 
 func main() {
 	evalArgs(os.Args)
-
 	iface := internal.NewScreen()
-
 	internal.EDITOR.AttachIface(iface)
 	internal.EDITOR.Run()
 }

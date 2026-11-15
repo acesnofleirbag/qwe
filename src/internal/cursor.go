@@ -1,3 +1,5 @@
+// Copyright (c) The Quickware Editor, 2026
+
 package internal
 
 type Offset struct {
@@ -11,8 +13,8 @@ type Cursor struct {
 	offset Offset
 }
 
-func NewCursor() Cursor {
-	return Cursor{
+func NewCursor() *Cursor {
+	cursor := &Cursor{
 		x: 0,
 		y: 0,
 		offset: Offset{
@@ -20,6 +22,8 @@ func NewCursor() Cursor {
 			y: 0,
 		},
 	}
+
+	return cursor
 }
 
 func (self *Cursor) From(x int64, y int64) {
@@ -34,7 +38,7 @@ func (self *Cursor) Up() {
 }
 
 func (self *Cursor) Right() {
-	line := EDITOR.GetCurrentLine()
+	line := EDITOR.GetCurline()
 
 	if int64(len(line.data)) > self.x {
 		self.x += 1

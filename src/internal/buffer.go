@@ -1,3 +1,5 @@
+// Copyright (c) The Quickware Editor, 2026
+
 package internal
 
 import (
@@ -8,9 +10,8 @@ import (
 type Line struct {
 	nline int64
 	data  []rune
-
-	prev *Line
-	next *Line
+	prev  *Line
+	next  *Line
 }
 
 func NewLine(nline int64) Line {
@@ -25,18 +26,18 @@ func NewLine(nline int64) Line {
 type Buffer struct {
 	dirty    bool
 	lines    int64
+	cursor   *Cursor
 	headline *Line
 	curline  *Line
 	tailline *Line
-	cursor   Cursor
 	prev     *Buffer
 	next     *Buffer
 }
 
-func NewBuffer() Buffer {
+func NewBuffer() *Buffer {
 	line := NewLine(0)
 
-	return Buffer{
+	buf := &Buffer{
 		lines:    1,
 		dirty:    false,
 		cursor:   NewCursor(),
@@ -46,10 +47,12 @@ func NewBuffer() Buffer {
 		prev:     nil,
 		next:     nil,
 	}
+
+	return buf
 }
 
-func NewBufferFromPath(path string) Buffer {
-	buf := Buffer{
+func NewBufferFromPath(path string) *Buffer {
+	buf := &Buffer{
 		dirty:    false,
 		headline: nil,
 		curline:  nil,
@@ -59,50 +62,39 @@ func NewBufferFromPath(path string) Buffer {
 		next:     nil,
 	}
 
-	info, err := os.Stat(path)
-
+	f, err := os.Open(path)
 	if err != nil {
-		panic("qwe: error opening path")
+		Log("[ERROR] buffer.NewBufferFromPath: cannot open path")
 	}
 
-	if info.IsDir() {
-		// TODO: treeview
-	} else {
-		f, err := os.Open(path)
+	defer f.Close()
 
-		if err != nil {
-			panic("qwe: error opening file")
+	scan := bufio.NewScanner(f)
+
+	var i int64 = 0
+	for scan.Scan() {
+		text := []rune(scan.Text())
+
+		line := NewLine(i)
+		line.data = text
+
+		if i == 0 {
+			buf.headline = &line
+			buf.curline = &line
+		} else {
+			line.prev = buf.tailline
+			buf.tailline.next = &line
 		}
 
-		defer f.Close()
+		buf.tailline = &line
+		i++
+	}
 
-		scan := bufio.NewScanner(f)
+	buf.curline = buf.headline
+	buf.lines = i
 
-		var i int64 = 0
-		for scan.Scan() {
-			text := []rune(scan.Text())
-
-			line := NewLine(i)
-			line.data = text
-
-			if i == 0 {
-				buf.headline = &line
-				buf.curline = &line
-			} else {
-				line.prev = buf.tailline
-				buf.tailline.next = &line
-			}
-
-			buf.tailline = &line
-			i++
-		}
-
-		buf.curline = buf.headline
-		buf.lines = i
-
-		if err := scan.Err(); err != nil {
-			panic("qwe: error scanning file")
-		}
+	if err := scan.Err(); err != nil {
+		panic("[ERROR] buffer.NewBufferFromPath: cannot scan file")
 	}
 
 	return buf
