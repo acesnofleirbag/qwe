@@ -1,10 +1,12 @@
+# Copyright (c) The Quickware Editor, 2026
+
 BIN = qwe
 
 all: run
 
 .PHONY: build
 build:
-	@go build -o build/$(BIN) ./src
+	@go build -o build/$(BIN) .
 
 .PHONY: run
 run: build
@@ -12,5 +14,5 @@ run: build
 
 .PHONY: fmt
 fmt:
-	go fmt ./src
+	go fmt ./...
 

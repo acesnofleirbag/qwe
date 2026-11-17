@@ -1,6 +1,6 @@
 // Copyright (c) The Quickware Editor, 2026
 
-package internal
+package text
 
 type Offset struct {
 	x int64
@@ -26,6 +26,22 @@ func NewCursor() *Cursor {
 	return cursor
 }
 
+func (self *Cursor) GetX() int64 {
+	return self.x
+}
+
+func (self *Cursor) GetY() int64 {
+	return self.y
+}
+
+func (self *Cursor) GetOffsetX() int64 {
+	return self.offset.x
+}
+
+func (self *Cursor) GetOffsetY() int64 {
+	return self.offset.y
+}
+
 func (self *Cursor) From(x int64, y int64) {
 	self.x = x
 	self.y = y
@@ -37,10 +53,8 @@ func (self *Cursor) Up() {
 	}
 }
 
-func (self *Cursor) Right() {
-	line := EDITOR.GetCurline()
-
-	if int64(len(line.data)) > self.x {
+func (self *Cursor) Right(lineLen int64) {
+	if lineLen > self.x {
 		self.x += 1
 	}
 }

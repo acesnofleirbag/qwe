@@ -1,9 +1,12 @@
 // Copyright (c) The Quickware Editor, 2026
 
-package internal
+package editor
 
 import (
 	"os"
+	"qwe/internal"
+	"qwe/internal/filetree"
+	"qwe/internal/text"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -29,66 +32,105 @@ const (
 	Movement__Left
 )
 
-type LineMode int
-
-const (
-	LineMode__Normal = iota
-	LineMode__Relative
-)
+type View interface {
+	GetScreen() tcell.Screen
+	Rehydrate()
+}
 
 type Editor struct {
 	config   map[string]any
 	mode     Mode
 	cmdline  []rune
-	buffer   *Buffer
+	buffer   *text.Buffer
 	finder   *Finder
-	timeline *Timeline
-	filetree *FileTree
-	tui      *TUI
+	timeline *text.Timeline
+	filetree *filetree.FileTree
+	view     View
 	exit     bool
 }
 
-var EDITOR = Editor{
-	config:   CONFIG,
+// Global editor state
+var EDITOR = &Editor{
+	config:   internal.CONFIG,
 	mode:     Mode__Normal,
 	cmdline:  make([]rune, 0),
-	buffer:   NewBuffer(),
+	buffer:   text.NewBuffer(),
 	finder:   NewFinder(),
-	timeline: NewTimeline(),
+	timeline: text.NewTimeline(),
 	exit:     false,
+}
+
+func (self *Editor) Run() {
+	S := self.view.GetScreen()
+	defer S.Fini()
+
+	events := make(chan tcell.Event)
+
+	go func() {
+		for {
+			events <- S.PollEvent()
+		}
+	}()
+
+	for !self.exit {
+		event := <-events
+
+		self.compute(event)
+		self.view.Rehydrate()
+	}
+}
+
+func (self *Editor) GetMode() Mode {
+	return self.mode
+}
+
+func (self *Editor) GetCmdline() []rune {
+	return self.cmdline
+}
+
+func (self *Editor) GetBuffer() *text.Buffer {
+	return self.buffer
+}
+
+func (self *Editor) GetFileTree() *filetree.FileTree {
+	return self.filetree
+}
+
+func (self *Editor) AttachView(view View) {
+	self.view = view
 }
 
 func (self *Editor) OpenPath(fname string) {
 	info, err := os.Stat(fname)
 
 	if err != nil {
-		Log("[ERROR] editor.OpenPath: cannot stat path")
+		internal.Log("[ERROR] editor.OpenPath: cannot stat path")
 	}
 
 	if info.IsDir() {
-		self.filetree = NewFileTree(fname)
+		self.filetree = filetree.NewFileTree(fname)
 		self.toggleFileTree()
 	} else {
-		self.buffer = NewBufferFromPath(fname)
+		self.buffer = text.NewBufferFromPath(fname)
 	}
 }
 
 func (self *Editor) GetFileTreeWidth() int {
-	if self.filetree == nil || !self.filetree.show {
+	if self.filetree == nil || !self.filetree.IsShown() {
 		return 0
 	}
 
-	return self.filetree.width + 1
+	return self.filetree.GetWidth() + 1
 }
 
 func (self *Editor) toggleFileTree() {
 	if self.filetree == nil {
-		self.filetree = NewFileTree(".")
+		self.filetree = filetree.NewFileTree(".")
 	}
 
-	self.filetree.show = !self.filetree.show
+	self.filetree.SetShown(!self.filetree.IsShown())
 
-	if self.filetree.show {
+	if self.filetree.IsShown() {
 		self.setMode(Mode__Tree)
 	} else {
 		self.setMode(Mode__Normal)
@@ -102,35 +144,13 @@ func (self *Editor) ExpandNode() {
 		return
 	}
 
-	if node.isDir {
+	if node.IsDir() {
 		self.filetree.Toggle()
 		return
 	}
 
-	self.buffer = NewBufferFromPath(node.path)
+	self.buffer = text.NewBufferFromPath(node.GetPath())
 	self.setMode(Mode__Normal)
-}
-
-func (self *Editor) Run() {
-	S := self.tui.screen
-	defer S.Fini()
-
-	go func() {
-		for {
-			Events <- S.PollEvent()
-		}
-	}()
-
-	for !self.exit {
-		event := <-Events
-
-		self.compute(event)
-		self.tui.Rehydrate()
-	}
-}
-
-func (self *Editor) AttachIface(tui *TUI) {
-	self.tui = tui
 }
 
 func (self *Editor) GetModeAsStr() string {
@@ -146,18 +166,18 @@ func (self *Editor) GetModeAsStr() string {
 	return modes[self.mode]
 }
 
-func (self *Editor) GetCursor() *Cursor {
-	return self.buffer.cursor
+func (self *Editor) GetCursor() *text.Cursor {
+	return self.buffer.GetCursor()
 }
 
-func (self *Editor) GetCurline() *Line {
+func (self *Editor) GetCurline() *text.Line {
 	cursor := self.GetCursor()
 
-	if self.buffer.lines <= cursor.y {
+	if self.buffer.GetLines() <= cursor.GetY() {
 		self.addNewline()
 	}
 
-	return self.buffer.curline
+	return self.buffer.GetCurLine()
 }
 
 func (self *Editor) computeNormalMode(event *tcell.EventKey) {
@@ -167,26 +187,26 @@ func (self *Editor) computeNormalMode(event *tcell.EventKey) {
 	case tcell.KeyRune:
 		switch event.Rune() {
 		case 'i':
-			EDITOR.setMode(Mode__Insert)
+			self.setMode(Mode__Insert)
 		case 'v':
-			EDITOR.setMode(Mode__Visual)
+			self.setMode(Mode__Visual)
 		case ':':
 			self.cmdline = append(self.cmdline, ':')
-			EDITOR.setMode(Mode__Command)
+			self.setMode(Mode__Command)
 		case 'g':
-			EDITOR.setMode(Mode__Goto)
+			self.setMode(Mode__Goto)
 		case 'k':
-			EDITOR.mvCursor(Movement__Up)
+			self.mvCursor(Movement__Up)
 		case 'l':
-			EDITOR.mvCursor(Movement__Right)
+			self.mvCursor(Movement__Right)
 		case 'j':
-			EDITOR.mvCursor(Movement__Down)
+			self.mvCursor(Movement__Down)
 		case 'h':
-			EDITOR.mvCursor(Movement__Left)
+			self.mvCursor(Movement__Left)
 		case '$':
-			GotoEndLine()
+			self.GotoEndLine()
 		case '0':
-			GotoStartLine()
+			self.GotoStartLine()
 		}
 	}
 }
@@ -197,7 +217,7 @@ func (self *Editor) computeInsertMode(event *tcell.EventKey) {
 		self.setMode(Mode__Normal)
 	case tcell.KeyEnter:
 		cursor := self.GetCursor()
-		cursor.From(0, cursor.y+1)
+		cursor.From(0, cursor.GetY()+1)
 		self.addNewline()
 	case tcell.KeyBackspace, tcell.KeyBackspace2:
 		self.rmChar("backward")
@@ -218,17 +238,17 @@ func (self *Editor) computeVisualMode(event *tcell.EventKey) {
 	case tcell.KeyRune:
 		switch event.Rune() {
 		case 'k':
-			EDITOR.mvCursor(Movement__Up)
+			self.mvCursor(Movement__Up)
 		case 'l':
-			EDITOR.mvCursor(Movement__Right)
+			self.mvCursor(Movement__Right)
 		case 'j':
-			EDITOR.mvCursor(Movement__Down)
+			self.mvCursor(Movement__Down)
 		case 'h':
-			EDITOR.mvCursor(Movement__Left)
+			self.mvCursor(Movement__Left)
 		case '$':
-			GotoEndLine()
+			self.GotoEndLine()
 		case '0':
-			GotoStartLine()
+			self.GotoStartLine()
 		}
 	}
 }
@@ -240,9 +260,9 @@ func (self *Editor) computeGotoMode(event *tcell.EventKey) {
 	case tcell.KeyRune:
 		switch event.Rune() {
 		case 'g':
-			GotoStartFile()
+			self.GotoStartFile()
 		case 'G':
-			GotoEndFile()
+			self.GotoEndFile()
 		}
 		self.setMode(Mode__Normal)
 	}
@@ -270,9 +290,9 @@ func (self *Editor) computeTreeMode(event *tcell.EventKey) {
 		self.toggleFileTree()
 		self.setMode(Mode__Normal)
 	case tcell.KeyUp:
-		self.filetree.Up()
+		self.filetree.MoveCursorUp()
 	case tcell.KeyDown:
-		self.filetree.Down()
+		self.filetree.MoveCursorDown()
 	case tcell.KeyLeft:
 		self.filetree.CollapseNode()
 	case tcell.KeyRight, tcell.KeyEnter:
@@ -280,9 +300,9 @@ func (self *Editor) computeTreeMode(event *tcell.EventKey) {
 	case tcell.KeyRune:
 		switch event.Rune() {
 		case 'k':
-			self.filetree.Up()
+			self.filetree.MoveCursorUp()
 		case 'j':
-			self.filetree.Down()
+			self.filetree.MoveCursorDown()
 		case 'h':
 			self.filetree.CollapseNode()
 		case 'l':
@@ -298,7 +318,7 @@ func (self *Editor) computeTreeMode(event *tcell.EventKey) {
 }
 
 func (self *Editor) compute(event tcell.Event) {
-	S := self.tui.screen
+	S := self.view.GetScreen()
 
 	switch event := event.(type) {
 	case *tcell.EventResize:
@@ -333,15 +353,14 @@ func (self *Editor) mvCursor(move Movement) {
 
 	switch move {
 	case Movement__Up:
-		if self.buffer.curline.prev != nil {
+		if self.buffer.GotoPrevLine() {
 			cursor.Up()
-			self.buffer.curline = self.buffer.curline.prev
 		}
 	case Movement__Right:
-		cursor.Right()
+		line := self.GetCurline()
+		cursor.Right(int64(len(line.GetData())))
 	case Movement__Down:
-		if self.buffer.curline.next != nil {
-			self.buffer.curline = self.buffer.curline.next
+		if self.buffer.GotoNextLine() {
 			cursor.Down()
 		}
 	case Movement__Left:
@@ -354,54 +373,22 @@ func (self *Editor) setMode(mode Mode) {
 }
 
 func (self *Editor) addNewline() {
-	cursor := self.GetCursor()
-	line := NewLine(cursor.y)
-
-	if cursor.y == 0 {
-		// TODO: self.buffer.head.next = self.buffer.head typing 'O'
-		self.buffer.headline = &line
-		self.buffer.tailline = &line
-	} else if cursor.y == self.buffer.lines {
-		self.buffer.curline.next = &line
-		line.prev = self.buffer.curline
-		self.buffer.tailline = &line
-	} else {
-		line.prev = self.buffer.curline
-		line.next = self.buffer.curline.next
-		self.buffer.curline.next = &line
-		self.buffer.tailline = &line
-	}
-
-	self.buffer.curline = &line
-	self.buffer.lines += 1
+	self.buffer.AddNewline()
 }
 
 func (self *Editor) addChar(ch rune) {
-	line := self.GetCurline()
-	line.data = append(line.data, ch)
-	self.buffer.dirty = true
+	self.GetCurline()
+	self.buffer.InsertRune(ch)
 	self.mvCursor(Movement__Right)
 }
 
 func (self *Editor) rmChar(mode string) {
-	cursor := self.GetCursor()
-	line := self.GetCurline()
-
-	if strings.Compare(mode, "backward") == 0 && cursor.x > 0 {
-		pre := line.data[:cursor.x-1]
-		su := line.data[cursor.x:]
-
-		line.data = append(pre, su...)
-	} else if strings.Compare(mode, "forward") == 0 && cursor.x < int64(len(line.data)) {
-		pre := line.data[:cursor.x]
-		su := line.data[cursor.x+1:]
-
-		line.data = append(pre, su...)
-	}
+	self.GetCurline()
+	self.buffer.DeleteRune(mode == "forward")
 }
 
 func (self *Editor) ComputeNumLineOffset() int64 {
-	nline := self.buffer.lines
+	nline := self.buffer.GetLines()
 
 	x := int64(0)
 
@@ -417,7 +404,7 @@ func (self *Editor) exeCmd() {
 	cmd := string(self.cmdline[1:])
 
 	if strings.Compare("q", cmd) == 0 || strings.Compare("Q", cmd) == 0 {
-		if self.buffer.dirty {
+		if self.buffer.IsDirty() {
 			// TODO: show a warning
 		}
 
@@ -426,6 +413,8 @@ func (self *Editor) exeCmd() {
 		self.exit = true
 	}
 
+	// GC: optimization to not realloc the array
+	clear(self.cmdline)
 	self.cmdline = self.cmdline[:0]
 	self.setMode(Mode__Normal)
 }

@@ -1,10 +1,11 @@
 // Copyright (c) The Quickware Editor, 2026
 
-package internal
+package filetree
 
 import (
 	"os"
 	"path/filepath"
+	"qwe/internal"
 	"slices"
 	"sort"
 )
@@ -39,7 +40,7 @@ func NewFileTree(path string) *FileTree {
 
 	info, err := os.Stat(path)
 	if err != nil {
-		Log("[ERROR] filetree.NewFileTree: cannot stat path")
+		internal.Log("[ERROR] filetree.NewFileTree: cannot stat path")
 	}
 
 	root := &FileNode{
@@ -61,6 +62,50 @@ func NewFileTree(path string) *FileTree {
 	return tree
 }
 
+func (self *FileNode) GetName() string {
+	return self.name
+}
+
+func (self *FileNode) GetPath() string {
+	return self.path
+}
+
+func (self *FileNode) GetDepth() int {
+	return self.depth
+}
+
+func (self *FileNode) IsDir() bool {
+	return self.isDir
+}
+
+func (self *FileNode) IsExpanded() bool {
+	return self.expanded
+}
+
+func (self *FileTree) IsVisible() []*FileNode {
+	return self.visible
+}
+
+func (self *FileTree) GetCursor() int {
+	return self.cursor
+}
+
+func (self *FileTree) GetScroll() int {
+	return self.scroll
+}
+
+func (self *FileTree) GetWidth() int {
+	return self.width
+}
+
+func (self *FileTree) IsShown() bool {
+	return self.show
+}
+
+func (self *FileTree) SetShown(show bool) {
+	self.show = show
+}
+
 func (self *FileNode) load() {
 	if self.loaded {
 		return
@@ -70,12 +115,12 @@ func (self *FileNode) load() {
 	entries, err := os.ReadDir(self.path)
 
 	if err != nil {
-		Log("[ERROR] filetree.load: cannot read dir")
+		internal.Log("[ERROR] filetree.load: cannot read dir")
 		return
 	}
 
 	for _, entry := range entries {
-		if slices.Contains(CONFIG["fileTreeIgnore"].([]string), entry.Name()) {
+		if slices.Contains(internal.CONFIG["fileTreeIgnore"].([]string), entry.Name()) {
 			continue
 		}
 
@@ -112,7 +157,7 @@ func (self *FileTree) walk(node *FileNode) {
 }
 
 func (self *FileTree) reload() {
-	// NOTE: gc optimization to not realloc the array
+	// GC: optimization to not realloc the array
 	clear(self.visible)
 	self.visible = self.visible[:0]
 
@@ -123,24 +168,24 @@ func (self *FileTree) reload() {
 	}
 }
 
+func (self *FileTree) MoveCursorUp() {
+	if self.cursor > 0 {
+		self.cursor -= 1
+	}
+}
+
+func (self *FileTree) MoveCursorDown() {
+	if self.cursor < len(self.visible)-1 {
+		self.cursor += 1
+	}
+}
+
 func (self *FileTree) Selected() *FileNode {
 	if len(self.visible) == 0 {
 		return nil
 	}
 
 	return self.visible[self.cursor]
-}
-
-func (self *FileTree) Up() {
-	if self.cursor > 0 {
-		self.cursor -= 1
-	}
-}
-
-func (self *FileTree) Down() {
-	if self.cursor < len(self.visible)-1 {
-		self.cursor += 1
-	}
 }
 
 func (self *FileTree) Toggle() {

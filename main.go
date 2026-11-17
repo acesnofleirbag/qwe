@@ -5,8 +5,11 @@ package main
 import (
 	"fmt"
 	"os"
-	"qwe/src/internal"
+	"qwe/internal/editor"
+	"qwe/internal/ui"
 )
+
+var EDITOR = editor.EDITOR
 
 func usage() {
 	fmt.Print(`The Quickware Editor: 
@@ -26,14 +29,14 @@ func evalArgs(args []string) {
 			fmt.Println("The Quickware Editor 1.0.0")
 			os.Exit(0)
 		default:
-			internal.EDITOR.OpenPath(args[i])
+			EDITOR.OpenPath(args[i])
 		}
 	}
 }
 
 func main() {
 	evalArgs(os.Args)
-	iface := internal.NewScreen()
-	internal.EDITOR.AttachIface(iface)
-	internal.EDITOR.Run()
+	tui := ui.NewScreen()
+	EDITOR.AttachView(tui)
+	EDITOR.Run()
 }

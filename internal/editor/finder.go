@@ -1,6 +1,6 @@
 // Copyright (c) The Quickware Editor, 2026
 
-package internal
+package editor
 
 const (
 	FindMode__Forward = iota

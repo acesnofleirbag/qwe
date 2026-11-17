@@ -1,6 +1,6 @@
 // Copyright (c) The Quickware Editor, 2026
 
-package internal
+package text
 
 type Timeline struct {
 	data []string

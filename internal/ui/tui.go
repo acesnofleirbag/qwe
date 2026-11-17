@@ -1,15 +1,16 @@
 // Copyright (c) The Quickware Editor, 2026
 
-package internal
+package ui
 
 import (
 	"fmt"
+	"qwe/internal/editor"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
 )
 
-var Events chan tcell.Event
+var EDITOR = editor.EDITOR
 
 type TUI struct {
 	screen tcell.Screen
@@ -32,8 +33,6 @@ func NewScreen() *TUI {
 	S.Clear()
 	S.Sync()
 
-	Events = make(chan tcell.Event)
-
 	tui := &TUI{
 		screen: S,
 	}
@@ -41,7 +40,11 @@ func NewScreen() *TUI {
 	return tui
 }
 
-func drawText(S tcell.Screen, x int, y int, text string, style tcell.Style) {
+func (self *TUI) GetScreen() tcell.Screen {
+	return self.screen
+}
+
+func (self *TUI) drawText(S tcell.Screen, x int, y int, text string, style tcell.Style) {
 	col := 0
 
 	for _, ch := range text {
@@ -51,9 +54,9 @@ func drawText(S tcell.Screen, x int, y int, text string, style tcell.Style) {
 }
 
 func (self *TUI) rehydrateFileTree() {
-	tree := EDITOR.filetree
+	tree := EDITOR.GetFileTree()
 
-	if tree == nil || !tree.show {
+	if tree == nil || !tree.IsShown() {
 		return
 	}
 
@@ -63,32 +66,32 @@ func (self *TUI) rehydrateFileTree() {
 
 	tree.ComputeScrollOffset(height)
 
-	focused := EDITOR.mode == Mode__Tree
+	focused := EDITOR.GetMode() == editor.Mode__Tree
 	border := tcell.StyleDefault.Foreground(tcell.ColorGray)
 
 	for line := range height {
-		idx := tree.scroll + line
+		idx := tree.GetScroll() + line
 
 		style := tcell.StyleDefault
 		text := ""
 
-		if idx < len(tree.visible) {
-			node := tree.visible[idx]
+		if idx < len(tree.IsVisible()) {
+			node := tree.IsVisible()[idx]
 			icon := "  "
 
-			if node.isDir {
+			if node.IsDir() {
 				icon = "> "
 
-				if node.expanded {
+				if node.IsExpanded() {
 					icon = "/ "
 				}
 
 				style = style.Foreground(tcell.ColorLightGray).Bold(true)
 			}
 
-			text = strings.Repeat("  ", node.depth) + icon + node.name
+			text = strings.Repeat("  ", node.GetDepth()) + icon + node.GetName()
 
-			if idx == tree.cursor {
+			if idx == tree.GetCursor() {
 				if focused {
 					style = style.Reverse(true)
 				} else {
@@ -99,16 +102,18 @@ func (self *TUI) rehydrateFileTree() {
 
 		runes := []rune(text)
 
-		if len(runes) > tree.width {
-			runes = append(runes[:tree.width-1], '…')
+		width := tree.GetWidth()
+
+		if len(runes) > width {
+			runes = append(runes[:width-1], '…')
 		}
 
-		for len(runes) < tree.width {
+		for len(runes) < width {
 			runes = append(runes, ' ')
 		}
 
-		drawText(S, 0, line, string(runes), style)
-		S.SetContent(tree.width, line, '|', nil, border)
+		self.drawText(S, 0, line, string(runes), style)
+		S.SetContent(width, line, '|', nil, border)
 	}
 }
 
@@ -118,26 +123,26 @@ func (self *TUI) rehydrateEditor() {
 	cursor := EDITOR.GetCursor()
 	fileTreeWidth := EDITOR.GetFileTreeWidth()
 
-	if !EDITOR.buffer.IsEmpty() {
-		line := EDITOR.buffer.curline
+	if buf := EDITOR.GetBuffer(); !buf.IsEmpty() {
+		line := buf.GetCurLine()
 
 		// render current line
-		render := fmt.Sprintf("%v %v", line.nline+1, string(line.data))
+		render := fmt.Sprintf("%v %v", line.GetNum()+1, string(line.GetData()))
 
-		drawText(S, fileTreeWidth, int(line.nline), render, tcell.StyleDefault)
+		self.drawText(S, fileTreeWidth, int(line.GetNum()), render, tcell.StyleDefault)
 
 		// render prev lines visible on render area
-		for prev := line.prev; prev != nil && line.nline >= cursor.offset.y; prev = prev.prev {
-			render := fmt.Sprintf("%v %v", prev.nline+1, string(prev.data))
+		for prev := line.GetPrev(); prev != nil && line.GetNum() >= cursor.GetOffsetY(); prev = prev.GetPrev() {
+			render := fmt.Sprintf("%v %v", prev.GetNum()+1, string(prev.GetData()))
 
-			drawText(S, fileTreeWidth, int(prev.nline), render, tcell.StyleDefault)
+			self.drawText(S, fileTreeWidth, int(prev.GetNum()), render, tcell.StyleDefault)
 		}
 
 		// render next lines visible on render area
-		for next := line.next; next != nil && line.nline <= cursor.y+cursor.offset.y; next = next.next {
-			render := fmt.Sprintf("%v %v", next.nline+1, string(next.data))
+		for next := line.GetNext(); next != nil && line.GetNum() <= cursor.GetY()+cursor.GetOffsetY(); next = next.GetNext() {
+			render := fmt.Sprintf("%v %v", next.GetNum()+1, string(next.GetData()))
 
-			drawText(S, fileTreeWidth, int(next.nline), render, tcell.StyleDefault)
+			self.drawText(S, fileTreeWidth, int(next.GetNum()), render, tcell.StyleDefault)
 		}
 	}
 }
@@ -149,13 +154,13 @@ func (self *TUI) rehydrateStatusline() {
 	cursor := EDITOR.GetCursor()
 
 	mode := fmt.Sprintf("[%v]", EDITOR.GetModeAsStr())
-	icursor := fmt.Sprintf("%v:%v", cursor.x, cursor.y)
+	icursor := fmt.Sprintf("%v:%v", cursor.GetX(), cursor.GetY())
 
 	gap := x_max - len(mode) - len(icursor)
 
-	if EDITOR.mode == Mode__Command {
+	if EDITOR.GetMode() == editor.Mode__Command {
 		// render cmdline
-		for col, ch := range EDITOR.cmdline {
+		for col, ch := range EDITOR.GetCmdline() {
 			S.SetContent(col, y_max-1, ch, nil, tcell.StyleDefault)
 		}
 	} else {
@@ -179,7 +184,7 @@ func (self *TUI) rehydrateStatusline() {
 func (self *TUI) rehydrateCursor() {
 	S := self.screen
 
-	if EDITOR.mode == Mode__Tree {
+	if EDITOR.GetMode() == editor.Mode__Tree {
 		S.HideCursor()
 		return
 	}
@@ -188,7 +193,7 @@ func (self *TUI) rehydrateCursor() {
 	cursor := EDITOR.GetCursor()
 	fileTreeWidth := EDITOR.GetFileTreeWidth()
 
-	S.ShowCursor(fileTreeWidth+int(cursor.x-cursor.offset.x)+int(nlineOff), int(cursor.y-cursor.offset.y))
+	S.ShowCursor(fileTreeWidth+int(cursor.GetX()-cursor.GetOffsetX())+int(nlineOff), int(cursor.GetY()-cursor.GetOffsetY()))
 }
 
 func (self *TUI) Rehydrate() {
